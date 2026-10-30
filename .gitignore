@@ -1,0 +1,13 @@
+# Model files live in the llm-models Docker volume, never in the repo
+*.gguf
+*.safetensors
+staging/
+
+# .NET build output
+bin/
+obj/
+
+# Editors
+.vs/
+.vscode/
+*.user
