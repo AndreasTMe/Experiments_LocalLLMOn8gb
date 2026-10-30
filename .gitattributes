@@ -1,0 +1,7 @@
+# Normalise line endings to LF in the repo and the working tree
+* text=auto eol=lf
+
+# Windows scripts keep CRLF
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
