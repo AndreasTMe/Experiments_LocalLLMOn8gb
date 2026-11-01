@@ -10,8 +10,8 @@ Recorded 2026-10-29 with read-only commands. Re-check the driver, Docker Desktop
 | VRAM                   | 8192 MiB GDDR6             | `nvidia-smi --query-gpu=memory.total` |
 | Memory bandwidth       | 448 GB/s (spec sheet)      | NVIDIA specification, not measured |
 | Compute capability     | 8.6 (Ampere)               | `nvidia-smi --query-gpu=compute_cap` |
-| Driver                 | 560.94, WDDM               | `nvidia-smi` |
-| Highest CUDA supported | 12.6                       | `nvidia-smi` header |
+| Driver                 | 617.42, WDDM               | `nvidia-smi` |
+| Highest CUDA supported | 13.4                       | `nvidia-smi` header |
 | VBIOS                  | 94.04.6b.00.a2             | `nvidia-smi --query-gpu=vbios_version` |
 | Power limit            | 220 W                      | `nvidia-smi --query-gpu=power.limit` |
 | PCIe link, max         | Gen 4 x16                  | `nvidia-smi --query-gpu=pcie.link.gen.max,pcie.link.width.max` |
@@ -44,9 +44,9 @@ VRAM bandwidth is 448 / 64 = **7x** the RAM bandwidth. That ratio is what sets t
 
 | Field          | Value                                   | Source |
 |----------------|-----------------------------------------|--------|
-| Windows        | Windows 10 Pro, build 19045.7725        | `wsl --version` |
-| Docker Desktop | 4.90.0 (238679), engine 29.7.2          | `docker version` |
-| WSL            | 3.0.1.0, kernel 6.18.40.1               | `wsl --version` |
+| Windows        | Windows 10 Pro, build 19045.7807        | `wsl --version` |
+| Docker engine  | 29.9.2                                  | `docker version` |
+| WSL            | 3.0.3.0, kernel 6.18.54.1               | `wsl --version` |
 | GPU runtime    | `nvidia` runtime registered in Docker   | `docker info` |
 
 ## WSL2 and Docker limits
@@ -74,7 +74,7 @@ In practice the limit is free space on L: (865 GB), not the 1 TB filesystem size
 
 ## Notes
 
-- **Driver and CUDA.** Driver 560.94 supports CUDA up to 12.6. If the current llama.cpp CUDA image is built on a newer CUDA, it won't start on this driver. Check the image's CUDA version first. If it's too new, either update the driver (your call) or pin an older image built on CUDA 12.6 or earlier.
+- **Driver and CUDA.** The driver stays at 617.42 for the whole series, so results stay comparable. It supports CUDA up to 13.4, and the pinned image in `docker/images.md` needs 12.8 or newer.
 - **RAM speed.** The kits are rated 5200 MT/s but run at 4000. Four DDR5 modules often run below their rating, or XMP may simply be off. At 5200 the theoretical bandwidth would be 83 GB/s. Decided 2026-10-29: it stays at 4000 MT/s for the whole series. The post should say the kit is rated higher.
 - **Hybrid CPU.** Windows 10 doesn't schedule well for 8 performance + 4 efficiency cores, and inside the WSL2 VM the two kinds of core look identical. Offload thread counts need a quick sweep (for example 8, 12, 16) rather than assuming "physical cores".
 - **WSL memory.** 31 GiB is enough for a ~30B MoE at Q4 (about 18 GB) plus the GPU-side buffers. A Q8 MoE (32.5 GB against a 33.6 GB limit) only just fits, with about 1 GB to spare, and may need the limit raised in `.wslconfig`.
