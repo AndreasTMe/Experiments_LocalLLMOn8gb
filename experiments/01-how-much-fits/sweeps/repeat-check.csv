@@ -1,0 +1,3 @@
+name,model_file,n_gpu_layers,flash_attn,cache_type_k,cache_type_v,n_cpu_moe,threads,n_prompt,n_gen,depth_tokens,repetitions,notes
+4b-q4km-f16-d0,Qwen3-4B-Q4_K_M.gguf,99,on,f16,f16,0,10,512,512,0,5,
+4b-q4km-q8-d4096,Qwen3-4B-Q4_K_M.gguf,99,on,q8_0,q8_0,0,10,512,512,4096,5,

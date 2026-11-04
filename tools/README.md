@@ -33,6 +33,35 @@ Runs until Ctrl+C, or for `--duration-s` seconds. Every row is flushed as it's w
 
 `clock_event_reasons` is `0x0000000000000001` when the GPU is idle and `0x0000000000000000` when nothing is holding the clocks back. Any other bit means throttling; see `nvidia-smi --help-query-gpu`.
 
+## bench.cs
+
+Runs a sweep of `llama-bench` configurations in the pinned llama.cpp image and appends one row per test to a results CSV, in the columns below.
+
+```
+dotnet run tools/bench.cs -- --sweep <sweep.csv> --experiment <name> [--out <results.csv>] [--cool-to-c N] [--cool-timeout-s 900]
+```
+
+`--out` defaults to `experiments/<experiment>/results/bench.csv`. The raw files go into `raw/` next to it.
+
+The sweep file has one configuration per line, one value per column:
+
+```
+name,model_file,n_gpu_layers,flash_attn,cache_type_k,cache_type_v,n_cpu_moe,threads,n_prompt,n_gen,depth_tokens,repetitions,notes
+4b-q4km-f16-d0,Qwen3-4B-Q4_K_M.gguf,99,on,f16,f16,0,10,512,512,0,5,
+```
+
+`model_file` has to be in `models/models.csv`, and `name` ends up in file names, so it's letters, digits, `.`, `_` and `-` only. Set `n_prompt` or `n_gen` to `0` to skip that test.
+
+For a sweep, the runner:
+
+1. Starts `gpu-sample.cs` for the whole sweep, writing to `raw/<time>-<sweep>-gpu.csv`.
+2. Before each configuration, waits until the GPU is back at idle temperature: `--cool-to-c`, or the temperature when the sweep started plus 1 °C. Start a sweep from an idle GPU. After `--cool-timeout-s` it runs anyway and says so in `notes`.
+3. Runs `llama-bench` once per configuration, by digest from `docker/images.md`, with `--gpus all`, the models volume read-only, `-o json` and `--progress`. `llama-bench` does a warm-up run before each test, so the runner doesn't add one.
+4. Saves the JSON as `raw/<run_id>.json` and the stderr as `raw/<run_id>.log`, with a host timestamp on every line.
+5. Writes one row per test. The sampler columns use only the samples inside the test's timed runs: each run starts at its `prompt run k/R` or `generation run k/R` progress line and lasts as long as `samples_ns` says. Warm-up and depth runs are left out.
+
+`bandwidth_ceiling_tokens_per_s` stays empty until the bandwidth ceiling calculator exists. If `llama-bench` fails, the log is kept, no row is written, and the sweep moves on.
+
 ## Benchmark results
 
 Each experiment keeps its benchmark results in `experiments/<experiment>/results/`:

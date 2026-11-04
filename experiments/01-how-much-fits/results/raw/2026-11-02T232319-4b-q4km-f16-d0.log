@@ -1,0 +1,18 @@
+2026-11-02T23:27:16.5957692+00:00 ggml_cuda_init: found 1 CUDA devices (Total VRAM: 8191 MiB):
+2026-11-02T23:27:16.5965918+00:00   Device 0: NVIDIA GeForce RTX 3060 Ti, compute capability 8.6, VMM: yes, VRAM: 8191 MiB
+2026-11-02T23:27:16.5966493+00:00 load_backend: loaded CUDA backend from /app/libggml-cuda.so
+2026-11-02T23:27:16.6222000+00:00 load_backend: loaded CPU backend from /app/libggml-cpu-haswell.so
+2026-11-02T23:27:16.6222648+00:00 llama-bench: benchmark 1/2: starting
+2026-11-02T23:27:18.0123687+00:00 llama-bench: benchmark 1/2: warmup prompt run
+2026-11-02T23:27:18.1953382+00:00 llama-bench: benchmark 1/2: prompt run 1/5
+2026-11-02T23:27:18.3183846+00:00 llama-bench: benchmark 1/2: prompt run 2/5
+2026-11-02T23:27:18.4364875+00:00 llama-bench: benchmark 1/2: prompt run 3/5
+2026-11-02T23:27:18.5532972+00:00 llama-bench: benchmark 1/2: prompt run 4/5
+2026-11-02T23:27:18.6709048+00:00 llama-bench: benchmark 1/2: prompt run 5/5
+2026-11-02T23:27:18.7918897+00:00 llama-bench: benchmark 2/2: starting
+2026-11-02T23:27:18.8112994+00:00 llama-bench: benchmark 2/2: warmup generation run
+2026-11-02T23:27:18.8401688+00:00 llama-bench: benchmark 2/2: generation run 1/5
+2026-11-02T23:27:23.2519639+00:00 llama-bench: benchmark 2/2: generation run 2/5
+2026-11-02T23:27:27.9858313+00:00 llama-bench: benchmark 2/2: generation run 3/5
+2026-11-02T23:27:32.6973213+00:00 llama-bench: benchmark 2/2: generation run 4/5
+2026-11-02T23:27:37.4909765+00:00 llama-bench: benchmark 2/2: generation run 5/5
