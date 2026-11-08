@@ -1,7 +1,7 @@
 // Runs a llama-bench sweep in the pinned llama.cpp image and appends one results row per test.
 //
 // Usage:
-//   dotnet run tools/bench.cs -- --sweep <sweep.csv> --experiment <name> [--out <results.csv>] [--cool-to-c N] [--cool-timeout-s 900]
+//   dotnet run tools/bench.cs -- --sweep <sweep.csv> --experiment <name> [--out <results.csv>] [--cool-to-c 45] [--cool-timeout-s 900]
 //
 // Run it from the repo root. For each configuration in the sweep file it waits for the GPU to cool down,
 // runs llama-bench once (pp and tg as separate tests), keeps the raw JSON and log, and joins the GPU samples
@@ -69,7 +69,9 @@ const int SamplerIntervalMs = 250;
 string? sweepPath = null;
 string? experiment = null;
 string? outPath = null;
-int? coolToC = null;
+// Fixed so it can't drift with the temperature a sweep starts at. True idle (about 41 °C) takes about
+// 10 minutes to reach because the fans stop at low temperatures; 45 °C takes about 3.
+int coolToC = 45;
 int coolTimeoutS = 900;
 
 for (int i = 0; i < args.Length; i++)
@@ -89,7 +91,7 @@ for (int i = 0; i < args.Length; i++)
 
 if (string.IsNullOrWhiteSpace(sweepPath) || string.IsNullOrWhiteSpace(experiment))
 {
-    Console.Error.WriteLine("Usage: dotnet run tools/bench.cs -- --sweep <sweep.csv> --experiment <name> [--out <results.csv>] [--cool-to-c N] [--cool-timeout-s 900]");
+    Console.Error.WriteLine("Usage: dotnet run tools/bench.cs -- --sweep <sweep.csv> --experiment <name> [--out <results.csv>] [--cool-to-c 45] [--cool-timeout-s 900]");
     return 1;
 }
 
@@ -105,6 +107,24 @@ if (image.Length == 0)
     return 1;
 }
 string imageDigest = image[(image.IndexOf('@') + 1)..];
+
+// The runner never pulls. Stop here if the pinned image isn't on this machine.
+var inspectInfo = new ProcessStartInfo("docker") { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+foreach (string argument in new[] { "image", "inspect", image })
+{
+    inspectInfo.ArgumentList.Add(argument);
+}
+using (var inspect = Process.Start(inspectInfo) ?? throw new InvalidOperationException("Couldn't start docker."))
+{
+    inspect.StandardOutput.ReadToEnd();
+    inspect.StandardError.ReadToEnd();
+    inspect.WaitForExit();
+    if (inspect.ExitCode != 0)
+    {
+        Console.Error.WriteLine($"The pinned image isn't available locally: {image}");
+        return 1;
+    }
+}
 
 var manifest = ReadCsv("models/models.csv").ToDictionary(row => row["file_name"]);
 
@@ -145,19 +165,18 @@ sampler.BeginErrorReadLine();
 try
 {
     Console.Error.WriteLine($"Sampling the GPU into {samplesPath}");
-    int? startTemperature = null;
-    for (int waited = 0; waited < 120 && (startTemperature = LatestTemperature(samplesPath)) is null; waited++)
+    int? firstTemperature = null;
+    for (int waited = 0; waited < 120 && (firstTemperature = LatestTemperature(samplesPath)) is null; waited++)
     {
         Thread.Sleep(1000);
     }
-    if (startTemperature is null)
+    if (firstTemperature is null)
     {
         Console.Error.WriteLine("The GPU sampler wrote no samples within 2 minutes.");
         return 1;
     }
 
-    // Without --cool-to-c, the target is the temperature when the sweep starts, plus 1 °C because idle readings move by 1 °C.
-    int targetC = coolToC ?? startTemperature.Value + 1;
+    int targetC = coolToC;
     Console.Error.WriteLine($"Cool-down target: {targetC} °C or lower before each configuration.");
 
     bool writeHeader = !File.Exists(outPath) || new FileInfo(outPath).Length == 0;

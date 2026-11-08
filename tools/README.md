@@ -38,7 +38,7 @@ Runs until Ctrl+C, or for `--duration-s` seconds. Every row is flushed as it's w
 Runs a sweep of `llama-bench` configurations in the pinned llama.cpp image and appends one row per test to a results CSV, in the columns below.
 
 ```
-dotnet run tools/bench.cs -- --sweep <sweep.csv> --experiment <name> [--out <results.csv>] [--cool-to-c N] [--cool-timeout-s 900]
+dotnet run tools/bench.cs -- --sweep <sweep.csv> --experiment <name> [--out <results.csv>] [--cool-to-c 45] [--cool-timeout-s 900]
 ```
 
 `--out` defaults to `experiments/<experiment>/results/bench.csv`. The raw files go into `raw/` next to it.
@@ -55,7 +55,7 @@ name,model_file,n_gpu_layers,flash_attn,cache_type_k,cache_type_v,n_cpu_moe,thre
 For a sweep, the runner:
 
 1. Starts `gpu-sample.cs` for the whole sweep, writing to `raw/<time>-<sweep>-gpu.csv`.
-2. Before each configuration, waits until the GPU is back at idle temperature: `--cool-to-c`, or the temperature when the sweep started plus 1 °C. Start a sweep from an idle GPU. After `--cool-timeout-s` it runs anyway and says so in `notes`.
+2. Before each configuration, waits until the GPU is at `--cool-to-c` (45 °C by default) or cooler. The target is fixed so it doesn't depend on how warm the GPU was when the sweep started. On the 3060 Ti, 45 °C takes about 3 minutes after a run; true idle (about 41 °C) takes about 10, because the fans stop at low temperatures. After `--cool-timeout-s` it runs anyway and says so in `notes`.
 3. Runs `llama-bench` once per configuration, by digest from `docker/images.md`, with `--gpus all`, the models volume read-only, `-o json` and `--progress`. `llama-bench` does a warm-up run before each test, so the runner doesn't add one.
 4. Saves the JSON as `raw/<run_id>.json` and the stderr as `raw/<run_id>.log`, with a host timestamp on every line.
 5. Writes one row per test. The sampler columns use only the samples inside the test's timed runs: each run starts at its `prompt run k/R` or `generation run k/R` progress line and lasts as long as `samples_ns` says. Warm-up and depth runs are left out.
