@@ -128,6 +128,18 @@ using (var inspect = Process.Start(inspectInfo) ?? throw new InvalidOperationExc
 
 var manifest = ReadCsv("models/models.csv").ToDictionary(row => row["file_name"]);
 
+// Written by tools/ceiling.cs, next to the results file. Keyed by model file and number of GPU layers.
+string ceilingsPath = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(outPath))!, "ceilings.csv");
+var ceilings = File.Exists(ceilingsPath)
+    ? ReadCsv(ceilingsPath).ToDictionary(
+        row => (row["model_file"], int.Parse(row["n_gpu_layers"], CultureInfo.InvariantCulture)),
+        row => row["ceiling_tokens_per_s"])
+    : null;
+if (ceilings is null)
+{
+    Console.Error.WriteLine($"No {ceilingsPath}, so bandwidth_ceiling_tokens_per_s stays empty. Run tools/ceiling.cs first to fill it.");
+}
+
 var configs = ReadCsv(sweepPath);
 foreach (var config in configs)
 {
@@ -284,8 +296,7 @@ try
                 inside.Count > 0 ? Text(inside[^1].TemperatureC) : "",
                 inside.Count > 0 ? Text(Math.Round(inside.Average(s => s.SmClockMhz))) : "",
                 string.Join(';', inside.Select(s => s.ClockEventReasons).Distinct()),
-                // Filled in once the bandwidth ceiling calculator exists.
-                "",
+                nPrompt > 0 ? "" : Ceiling(Path.GetFileName(Raw("model_filename")), int.Parse(Raw("n_gpu_layers"), CultureInfo.InvariantCulture), int.Parse(Raw("n_cpu_moe"), CultureInfo.InvariantCulture)),
             ];
             results.WriteLine(string.Join(',', row));
             Console.Error.WriteLine($"  {row[15]}{row[16]} @ d{row[17]}: {row[19]} tokens/s, {inside.Count} GPU samples");
@@ -365,6 +376,19 @@ return 0;
     {
         return (process.ExitCode, json, log.ToList());
     }
+}
+
+// The decode ceiling for a tg row. Empty for pp rows, because prefill isn't limited by memory bandwidth the
+// same way, and for --n-cpu-moe runs, which tools/ceiling.cs doesn't cover. -ngl 99 means "all layers", so
+// anything above the model's layer count is looked up as all of them.
+string Ceiling(string modelFile, int gpuLayers, int cpuMoe)
+{
+    if (ceilings is null || cpuMoe > 0)
+    {
+        return "";
+    }
+    int layers = int.Parse(manifest[modelFile]["layers"], CultureInfo.InvariantCulture);
+    return ceilings.TryGetValue((modelFile, Math.Min(gpuLayers, layers)), out string? ceiling) ? ceiling : "";
 }
 
 static List<Dictionary<string, string>> ReadCsv(string path)
