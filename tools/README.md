@@ -60,7 +60,50 @@ For a sweep, the runner:
 4. Saves the JSON as `raw/<run_id>.json` and the stderr as `raw/<run_id>.log`, with a host timestamp on every line.
 5. Writes one row per test. The sampler columns use only the samples inside the test's timed runs: each run starts at its `prompt run k/R` or `generation run k/R` progress line and lasts as long as `samples_ns` says. Warm-up and depth runs are left out.
 
-`bandwidth_ceiling_tokens_per_s` stays empty until the bandwidth ceiling calculator exists. If `llama-bench` fails, the log is kept, no row is written, and the sweep moves on.
+`bandwidth_ceiling_tokens_per_s` comes from `ceilings.csv` next to the results file, so run `ceiling.cs` first. If that file is missing, the runner says so and leaves the column empty. If `llama-bench` fails, the log is kept, no row is written, and the sweep moves on.
+
+## ceiling.cs
+
+Works out the memory-bandwidth ceiling on decode speed for every model in `models/models.csv`. It needs no GPU and no downloads.
+
+```
+dotnet run tools/ceiling.cs -- --experiment <name> [--out <ceilings.csv>] [--vram-gbps 448] [--ram-gbps 64]
+```
+
+`--out` defaults to `experiments/<experiment>/results/ceilings.csv`. The file is rewritten on every run.
+
+Decode reads every weight it uses once per token, so a token can't be faster than the time it takes to read those bytes:
+
+```
+seconds per token = GPU bytes / VRAM bandwidth + CPU bytes / RAM bandwidth
+ceiling           = 1 / seconds per token
+```
+
+There's one row per model and number of GPU layers, from `0` (CPU only) to `layers` (everything on the GPU). Fitting in VRAM is a separate question: the full-GPU row is there even for models that don't fit.
+
+The numbers it assumes:
+
+- **Bandwidth.** 448 GB/s for the RTX 3060 Ti's GDDR6. 64 GB/s for the RAM, which is the theoretical figure for dual-channel DDR4 at 4000 MT/s (2 × 8 bytes × 4000 MT/s), not a measured one. GB here is 10⁹ bytes.
+- **Bytes per token.** The file size. It includes the GGUF header and metadata, so it overstates the weights by a little. An MoE model reads only its active parameters, so it uses `size_bytes × active_params / total_params`.
+- **Bytes per layer.** Bytes per token divided evenly by `layers`. The embedding and output tensors aren't really spread that way.
+- **MoE with experts on the CPU** (`--n-cpu-moe`) isn't covered. That needs the split between expert and shared weights, which isn't in the manifest.
+
+| Column                 | Example                | Source                                     |
+| ---------------------- | ---------------------- | ------------------------------------------ |
+| `model_file`           | `Qwen3-8B-Q4_K_M.gguf` | `file_name`                                |
+| `quant`                | `Q4_K_M`               | `quant`                                    |
+| `role`                 | `dense-8b`             | `role`                                     |
+| `model_size_bytes`     | `5027783488`           | `size_bytes`                               |
+| `total_params`         | `8.2B`                 | `total_params`                             |
+| `active_params`        | `8.2B`                 | `active_params`                            |
+| `bytes_per_token`      | `5027783488`           | as above                                   |
+| `layers`               | `36`                   | `layers`                                   |
+| `n_gpu_layers`         | `30`                   | `0` to `layers`                            |
+| `gpu_bytes`            | `4189819573`           | `bytes_per_token × n_gpu_layers / layers`  |
+| `cpu_bytes`            | `837963915`            | `bytes_per_token − gpu_bytes`              |
+| `vram_gbps`            | `448`                  | `--vram-gbps`                              |
+| `ram_gbps`             | `64`                   | `--ram-gbps`                               |
+| `ceiling_tokens_per_s` | `44.6`                 | `1 / (gpu_bytes / VRAM + cpu_bytes / RAM)` |
 
 ## Benchmark results
 
@@ -136,11 +179,11 @@ Values are written as they come from the source. Times are ISO 8601 with offset,
 | `sm_clock_mean_mhz`        | `1770`               | mean `sm_clock_mhz`                           |
 | `clock_event_reasons_seen` | `0x0000000000000000` | distinct `clock_event_reasons`, `;`-separated |
 
-**Bandwidth ceiling calculator.**
+**`ceiling.cs` output.** Looked up by `model_file` and `n_gpu_layers`. An `n_gpu_layers` above the model's layer count (such as `99`) counts as all layers.
 
-| Column                           | Example | Source                                     |
-| -------------------------------- | ------- | ------------------------------------------ |
-| `bandwidth_ceiling_tokens_per_s` | `91.4`  | the calculator's estimate for `model_file` |
+| Column                           | Example | Source                                                                        |
+| -------------------------------- | ------- | ----------------------------------------------------------------------------- |
+| `bandwidth_ceiling_tokens_per_s` | `89.1`  | `ceiling_tokens_per_s`; tg rows only, and empty when `n_cpu_moe` is above `0` |
 
 Things the fixture shows that the columns have to deal with:
 
