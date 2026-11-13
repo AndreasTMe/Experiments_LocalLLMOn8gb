@@ -1,0 +1,11 @@
+name,model_file,n_gpu_layers,flash_attn,cache_type_k,cache_type_v,n_cpu_moe,threads,n_prompt,n_gen,depth_tokens,repetitions,notes
+4b-q4km,Qwen3-4B-Q4_K_M.gguf,99,on,f16,f16,0,10,512,512,0,5,
+4b-q5km,Qwen3-4B-Q5_K_M.gguf,99,on,f16,f16,0,10,512,512,0,5,
+4b-q6k,Qwen3-4B-Q6_K.gguf,99,on,f16,f16,0,10,512,512,0,5,
+4b-q80,Qwen3-4B-Q8_0.gguf,99,on,f16,f16,0,10,512,512,0,5,
+8b-q4km,Qwen3-8B-Q4_K_M.gguf,99,on,f16,f16,0,10,512,512,0,5,
+8b-q5km,Qwen3-8B-Q5_K_M.gguf,99,on,f16,f16,0,10,512,512,0,5,
+8b-q6k,Qwen3-8B-Q6_K.gguf,99,on,f16,f16,0,10,512,512,0,5,
+8b-q80,Qwen3-8B-Q8_0.gguf,30,on,f16,f16,0,10,512,512,0,5,29 of 36 layers plus output; llama-bench -fitt 512 chose this
+14b-q4km,Qwen3-14B-Q4_K_M.gguf,32,on,f16,f16,0,10,512,512,0,5,31 of 40 layers plus output; llama-bench -fitt 512 chose this
+30b-a3b-q4km,Qwen3-30B-A3B-Q4_K_M.gguf,99,on,f16,f16,33,10,512,512,0,5,experts of the first 33 layers on the CPU; keeps a 512 MiB margin like -fitt 512
