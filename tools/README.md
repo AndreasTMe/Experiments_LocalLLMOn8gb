@@ -64,7 +64,7 @@ For a sweep, the runner:
 
 ## ceiling.cs
 
-Works out the memory-bandwidth ceiling on decode speed for every model in `models/models.csv`. It needs no GPU and no downloads.
+Works out the memory-bandwidth ceiling on decode speed for every model in `models/models.csv`. It needs Docker and the pinned image, but no GPU and no downloads: it reads each model's GGUF header from the `llm-models` volume through the image, with `head`.
 
 ```
 dotnet run tools/ceiling.cs -- --experiment <name> [--out <ceilings.csv>] [--vram-gbps 448] [--ram-gbps 64]
@@ -79,31 +79,35 @@ seconds per token = GPU bytes / VRAM bandwidth + CPU bytes / RAM bandwidth
 ceiling           = 1 / seconds per token
 ```
 
-There's one row per model and number of GPU layers, from `0` (CPU only) to `layers` (everything on the GPU). Fitting in VRAM is a separate question: the full-GPU row is there even for models that don't fit.
+Each model gets one row per `-ngl` value, from `0` (CPU only) to `layers + 1` (everything on the GPU; `-ngl` counts the output layer as one). An MoE model also gets one row per `--n-cpu-moe` value from `1` to `layers`, with everything else on the GPU. Fitting in VRAM is a separate question: the full-GPU row is there even for models that don't fit.
 
-The numbers it assumes:
+**Bytes.** Each tensor's size comes from the model's own tensor table: the gap between its data offset and the next one's. That includes a few bytes of alignment padding per tensor.
 
-- **Bandwidth.** 448 GB/s for the RTX 3060 Ti's GDDR6. 64 GB/s for the RAM, which is the theoretical figure for dual-channel DDR4 at 4000 MT/s (2 × 8 bytes × 4000 MT/s), not a measured one. GB here is 10⁹ bytes.
-- **Bytes per token.** The file size. It includes the GGUF header and metadata, so it overstates the weights by a little. An MoE model reads only its active parameters, so it uses `size_bytes × active_params / total_params`.
-- **Bytes per layer.** Bytes per token divided evenly by `layers`. The embedding and output tensors aren't really spread that way.
-- **MoE with experts on the CPU** (`--n-cpu-moe`) isn't covered. That needs the split between expert and shared weights, which isn't in the manifest.
+**Placement.** It follows llama.cpp. `gpu_weights_bytes` matched the `CUDA0 model buffer size` that `llama-bench -v` logs to within 0.1 MiB, for full and partial offload, tied embeddings and `--n-cpu-moe`.
 
-| Column                 | Example                | Source                                     |
-| ---------------------- | ---------------------- | ------------------------------------------ |
-| `model_file`           | `Qwen3-8B-Q4_K_M.gguf` | `file_name`                                |
-| `quant`                | `Q4_K_M`               | `quant`                                    |
-| `role`                 | `dense-8b`             | `role`                                     |
-| `model_size_bytes`     | `5027783488`           | `size_bytes`                               |
-| `total_params`         | `8.2B`                 | `total_params`                             |
-| `active_params`        | `8.2B`                 | `active_params`                            |
-| `bytes_per_token`      | `5027783488`           | as above                                   |
-| `layers`               | `36`                   | `layers`                                   |
-| `n_gpu_layers`         | `30`                   | `0` to `layers`                            |
-| `gpu_bytes`            | `4189819573`           | `bytes_per_token × n_gpu_layers / layers`  |
-| `cpu_bytes`            | `837963915`            | `bytes_per_token − gpu_bytes`              |
-| `vram_gbps`            | `448`                  | `--vram-gbps`                              |
-| `ram_gbps`             | `64`                   | `--ram-gbps`                               |
-| `ceiling_tokens_per_s` | `44.6`                 | `1 / (gpu_bytes / VRAM + cpu_bytes / RAM)` |
+- `-ngl N` puts the output layer and the last `N − 1` repeating layers on the GPU.
+- The token embedding table always stays in system RAM. Decode reads one row of it per token, so it counts as 0 bytes. With tied embeddings (the 4B) there's no output tensor, and the output reads the whole embedding table, so that table counts as the output layer.
+- `--n-cpu-moe M` moves the expert tensors of the first `M` layers to system RAM.
+- An MoE model reads `expert_used_count` of its `expert_count` experts per token (8 of 128 for Qwen3-30B-A3B), so expert tensors count at that share.
+
+**Bandwidth.** 448 GB/s for the RTX 3060 Ti's GDDR6. 64 GB/s for the RAM, which is the theoretical figure for dual-channel DDR4 at 4000 MT/s (2 × 8 bytes × 4000 MT/s), not a measured one. GB here is 10⁹ bytes.
+
+**Not counted.** Reading the KV cache. It's small at depth 0, but it grows with context, so the ceiling is too high at long depths.
+
+| Column                 | Example                | Source                                                         |
+| ---------------------- | ---------------------- | -------------------------------------------------------------- |
+| `model_file`           | `Qwen3-8B-Q4_K_M.gguf` | `file_name`                                                    |
+| `quant`                | `Q4_K_M`               | `quant`                                                        |
+| `role`                 | `dense-8b`             | `role`                                                         |
+| `layers`               | `36`                   | `layers`, checked against the GGUF's `block_count`             |
+| `n_gpu_layers`         | `30`                   | `0` to `layers + 1`                                            |
+| `n_cpu_moe`            | `0`                    | `0`, or `1` to `layers` for MoE models                         |
+| `gpu_weights_bytes`    | `3841549312`           | bytes of the tensors on the GPU                                |
+| `gpu_bytes_per_token`  | `3841549312`           | bytes one token reads from the GPU                             |
+| `cpu_bytes_per_token`  | `830217216`            | bytes one token reads from system RAM                          |
+| `vram_gbps`            | `448`                  | `--vram-gbps`                                                  |
+| `ram_gbps`             | `64`                   | `--ram-gbps`                                                   |
+| `ceiling_tokens_per_s` | `46.4`                 | `1 / (gpu_bytes_per_token / VRAM + cpu_bytes_per_token / RAM)` |
 
 ## Benchmark results
 
@@ -179,11 +183,11 @@ Values are written as they come from the source. Times are ISO 8601 with offset,
 | `sm_clock_mean_mhz`        | `1770`               | mean `sm_clock_mhz`                           |
 | `clock_event_reasons_seen` | `0x0000000000000000` | distinct `clock_event_reasons`, `;`-separated |
 
-**`ceiling.cs` output.** Looked up by `model_file` and `n_gpu_layers`. An `n_gpu_layers` above the model's layer count (such as `99`) counts as all layers.
+**`ceiling.cs` output.** Looked up by `model_file`, `n_gpu_layers` and `n_cpu_moe`. An `n_gpu_layers` above `layers + 1` (such as `99`) counts as all layers.
 
-| Column                           | Example | Source                                                                        |
-| -------------------------------- | ------- | ----------------------------------------------------------------------------- |
-| `bandwidth_ceiling_tokens_per_s` | `89.1`  | `ceiling_tokens_per_s`; tg rows only, and empty when `n_cpu_moe` is above `0` |
+| Column                           | Example | Source                                                                                     |
+| -------------------------------- | ------- | ------------------------------------------------------------------------------------------ |
+| `bandwidth_ceiling_tokens_per_s` | `95.9`  | `ceiling_tokens_per_s`; tg rows only, and empty for `n_cpu_moe` with fewer than all layers |
 
 Things the fixture shows that the columns have to deal with:
 
