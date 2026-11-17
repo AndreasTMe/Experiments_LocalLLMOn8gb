@@ -195,6 +195,76 @@ Things the fixture shows that the columns have to deal with:
 - **The test window.** JSON `test_time` is the start of each test, to the second, and there's no end time. The window for the sampler columns has to come from the runner, which knows when each test started and finished. A tg test also has to run for several seconds, because `power.draw.average` is a 1-second average.
 - **Flash attention** is `1` or `0` in the JSON, not `on` or `off`.
 
+### llama-bench JSON properties
+
+`raw/<run_id>.json` is an array with one object per test: a pp test when `n_prompt` > 0, a tg test when `n_gen` > 0. Every object has the properties below, in this order. The examples are from the fixture's first test. Most properties echo a `llama-bench` flag, named as in `--help` of the pinned image; a flag the runner doesn't pass keeps its default.
+
+**Build and machine.**
+
+| Property       | Example                                 | Meaning                             | Results column |
+| -------------- | --------------------------------------- | ----------------------------------- | -------------- |
+| `build_commit` | `a91eab67d`                             | llama.cpp commit of the image       | `llama_commit` |
+| `build_number` | `12030`                                 | llama.cpp build number of the image | `llama_build`  |
+| `cpu_info`     | `12th Gen Intel(R) Core(TM) i7-12700KF` | CPU name                            |                |
+| `gpu_info`     | `NVIDIA GeForce RTX 3060 Ti`            | GPU name                            |                |
+| `backends`     | `CUDA`                                  | compute backends in the build       |                |
+
+**Model.**
+
+| Property         | Example                        | Meaning                                                      | Results column                |
+| ---------------- | ------------------------------ | ------------------------------------------------------------ | ----------------------------- |
+| `model_filename` | `/models/Qwen3-4B-Q4_K_M.gguf` | `-m`, the path inside the container                          | `model_file` (file name only) |
+| `model_type`     | `qwen3 4B Q4_K - Medium`       | architecture, size and quantisation, as llama.cpp names them |                               |
+| `model_size`     | `2491323904`                   | bytes of tensor data, not the file size                      |                               |
+| `model_n_params` | `4022468096`                   | number of parameters                                         |                               |
+
+**Settings.**
+
+| Property                | Example | Flag           | Meaning                                                   | Results column |
+| ----------------------- | ------- | -------------- | --------------------------------------------------------- | -------------- |
+| `n_batch`               | `2048`  | `-b`           | logical batch size                                        |                |
+| `n_ubatch`              | `512`   | `-ub`          | physical batch size                                       |                |
+| `n_threads`             | `10`    | `-t`           | CPU threads                                               | `threads`      |
+| `cpu_mask`              | `0x0`   | `-C`           | CPU affinity mask; `0x0` is none                          |                |
+| `cpu_strict`            | `false` | `--cpu-strict` | strict CPU placement                                      |                |
+| `poll`                  | `50`    | `--poll`       | polling level while waiting for work, 0–100               |                |
+| `type_k`                | `q8_0`  | `-ctk`         | KV cache type for K                                       | `cache_type_k` |
+| `type_v`                | `q8_0`  | `-ctv`         | KV cache type for V                                       | `cache_type_v` |
+| `n_gpu_layers`          | `99`    | `-ngl`         | layers on the GPU, as passed                              | `n_gpu_layers` |
+| `n_cpu_moe`             | `0`     | `-ncmoe`       | layers whose MoE experts stay in system RAM               | `n_cpu_moe`    |
+| `split_mode`            | `layer` | `-sm`          | how a model is split across several GPUs                  |                |
+| `main_gpu`              | `0`     | `-mg`          | main GPU index                                            |                |
+| `no_kv_offload`         | `false` | `-nkvo`        | `true` keeps the KV cache in system RAM                   |                |
+| `flash_attn`            | `1`     | `-fa`          | flash attention, `1` on and `0` off                       | `flash_attn`   |
+| `devices`               | `auto`  | `-dev`         | devices to use                                            |                |
+| `tensor_split`          | `0.00`  | `-ts`          | share of the model per GPU                                |                |
+| `tensor_buft_overrides` | `none`  | `-ot`          | tensor-to-buffer overrides                                |                |
+| `load_mode`             | `auto`  | `-lm`          | how weights are loaded: mmap, mlock or direct I/O         |                |
+| `lazy_mode`             | `auto`  | `-lzm`         | the `-lzm` setting                                        |                |
+| `embeddings`            | `false` | `-embd`        | embeddings mode instead of generation                     |                |
+| `no_op_offload`         | `0`     | `-nopo`        | the `-nopo` setting                                       |                |
+| `no_host`               | `false` | `--no-host`    | the `--no-host` setting                                   |                |
+| `repack`                | `true`  | `--repack`     | weight repacking for the CPU backend                      |                |
+| `fit_target`            | `0`     | `-fitt`        | margin in MiB for fitting the model to memory; `0` is off |                |
+| `fit_min_ctx`           | `0`     | `-fitc`        | minimum context for `-fitt`                               |                |
+
+**The test and its result.**
+
+| Property     | Example                             | Meaning                                                          | Results column             |
+| ------------ | ----------------------------------- | ---------------------------------------------------------------- | -------------------------- |
+| `n_prompt`   | `512`                               | `-p`, prompt tokens in a pp test; `0` in a tg test               | `n_tokens`, `test`         |
+| `n_gen`      | `0`                                 | `-n`, generated tokens in a tg test; `0` in a pp test            | `n_tokens`, `test`         |
+| `n_depth`    | `0`                                 | `-d`, tokens already in the cache before the test                | `depth_tokens`             |
+| `test_time`  | `2026-11-02T20:03:15Z`              | when the test started, to the second                             |                            |
+| `avg_ns`     | `115602100`                         | mean time of one repetition, in nanoseconds                      |                            |
+| `stddev_ns`  | `2990650`                           | standard deviation of that time                                  |                            |
+| `avg_ts`     | `4430.982942`                       | mean tokens per second                                           | `tokens_per_s_mean`        |
+| `stddev_ts`  | `115.834293`                        | standard deviation of tokens per second                          | `tokens_per_s_stddev`      |
+| `samples_ns` | `[116460200, 112276200, 118069900]` | time of each repetition; the runner uses it for the test windows |                            |
+| `samples_ts` | `[4396.35, 4560.18, 4336.41]`       | tokens per second of each repetition                             | `repetitions` (its length) |
+
+The times cover only the `n_prompt` or `n_gen` tokens. Filling the cache to `n_depth` and the warm-up run aren't timed.
+
 ### What the columns are for
 
 | Use                                | Columns                                                                                       |

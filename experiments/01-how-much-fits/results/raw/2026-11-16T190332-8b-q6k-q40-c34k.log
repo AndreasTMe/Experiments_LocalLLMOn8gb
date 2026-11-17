@@ -1,0 +1,8 @@
+2026-11-16T19:26:53.4383767+00:00 ggml_cuda_init: found 1 CUDA devices (Total VRAM: 8191 MiB):
+2026-11-16T19:26:53.4384406+00:00   Device 0: NVIDIA GeForce RTX 3060 Ti, compute capability 8.6, VMM: yes, VRAM: 8191 MiB
+2026-11-16T19:26:53.4384519+00:00 load_backend: loaded CUDA backend from /app/libggml-cuda.so
+2026-11-16T19:26:53.4452560+00:00 load_backend: loaded CPU backend from /app/libggml-cpu-haswell.so
+2026-11-16T19:26:53.4455793+00:00 llama-bench: benchmark 1/1: starting
+2026-11-16T19:26:54.6109793+00:00 llama-bench: benchmark 1/1: warmup generation run
+2026-11-16T19:26:54.6622932+00:00 llama-bench: benchmark 1/1: depth run 1/1
+2026-11-16T19:27:21.1657973+00:00 llama-bench: benchmark 1/1: generation run 1/1

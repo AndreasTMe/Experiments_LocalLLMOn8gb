@@ -1,0 +1,19 @@
+name,model_file,n_gpu_layers,flash_attn,cache_type_k,cache_type_v,n_cpu_moe,threads,n_prompt,n_gen,depth_tokens,repetitions,notes
+8b-q4km-f16-c16k,Qwen3-8B-Q4_K_M.gguf,99,on,f16,f16,0,10,0,32,16352,1,context 16384
+8b-q4km-f16-c17k,Qwen3-8B-Q4_K_M.gguf,99,on,f16,f16,0,10,0,32,17376,1,context 17408
+8b-q4km-f16-c18k,Qwen3-8B-Q4_K_M.gguf,99,on,f16,f16,0,10,0,32,18400,1,context 18432
+8b-q4km-f16-c19k,Qwen3-8B-Q4_K_M.gguf,99,on,f16,f16,0,10,0,32,19424,1,context 19456
+8b-q4km-f16-c20k,Qwen3-8B-Q4_K_M.gguf,99,on,f16,f16,0,10,0,32,20448,1,context 20480
+8b-q4km-f16-c21k,Qwen3-8B-Q4_K_M.gguf,99,on,f16,f16,0,10,0,32,21472,1,context 21504
+8b-q4km-f16-c22k,Qwen3-8B-Q4_K_M.gguf,99,on,f16,f16,0,10,0,32,22496,1,context 22528
+8b-q4km-f16-c23k,Qwen3-8B-Q4_K_M.gguf,99,on,f16,f16,0,10,0,32,23520,1,context 23552
+8b-q4km-f16-c24k,Qwen3-8B-Q4_K_M.gguf,99,on,f16,f16,0,10,0,32,24544,1,context 24576
+8b-q4km-q80-c32k,Qwen3-8B-Q4_K_M.gguf,99,on,q8_0,q8_0,0,10,0,32,32736,1,context 32768
+8b-q4km-q80-c33k,Qwen3-8B-Q4_K_M.gguf,99,on,q8_0,q8_0,0,10,0,32,33760,1,context 33792
+8b-q4km-q80-c34k,Qwen3-8B-Q4_K_M.gguf,99,on,q8_0,q8_0,0,10,0,32,34784,1,context 34816
+8b-q4km-q80-c35k,Qwen3-8B-Q4_K_M.gguf,99,on,q8_0,q8_0,0,10,0,32,35808,1,context 35840
+8b-q4km-q80-c36k,Qwen3-8B-Q4_K_M.gguf,99,on,q8_0,q8_0,0,10,0,32,36832,1,context 36864
+8b-q4km-q80-c37k,Qwen3-8B-Q4_K_M.gguf,99,on,q8_0,q8_0,0,10,0,32,37856,1,context 37888
+8b-q4km-q80-c38k,Qwen3-8B-Q4_K_M.gguf,99,on,q8_0,q8_0,0,10,0,32,38880,1,context 38912
+8b-q4km-q80-c39k,Qwen3-8B-Q4_K_M.gguf,99,on,q8_0,q8_0,0,10,0,32,39904,1,context 39936
+8b-q4km-q80-c40k,Qwen3-8B-Q4_K_M.gguf,99,on,q8_0,q8_0,0,10,0,32,40928,1,context 40960; the trained context

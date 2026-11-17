@@ -1,0 +1,11 @@
+name,model_file,n_gpu_layers,flash_attn,cache_type_k,cache_type_v,n_cpu_moe,threads,n_prompt,n_gen,depth_tokens,repetitions,notes
+8b-q6k-f16-c8k,Qwen3-8B-Q6_K.gguf,99,on,f16,f16,0,10,0,32,8160,1,context 8192
+8b-q6k-f16-c9k,Qwen3-8B-Q6_K.gguf,99,on,f16,f16,0,10,0,32,9184,1,context 9216
+8b-q6k-f16-c10k,Qwen3-8B-Q6_K.gguf,99,on,f16,f16,0,10,0,32,10208,1,context 10240
+8b-q6k-f16-c11k,Qwen3-8B-Q6_K.gguf,99,on,f16,f16,0,10,0,32,11232,1,context 11264
+8b-q6k-f16-c12k,Qwen3-8B-Q6_K.gguf,99,on,f16,f16,0,10,0,32,12256,1,context 12288
+8b-q6k-q80-c20k,Qwen3-8B-Q6_K.gguf,99,on,q8_0,q8_0,0,10,0,32,20448,1,context 20480
+8b-q6k-q80-c21k,Qwen3-8B-Q6_K.gguf,99,on,q8_0,q8_0,0,10,0,32,21472,1,context 21504
+8b-q6k-q80-c22k,Qwen3-8B-Q6_K.gguf,99,on,q8_0,q8_0,0,10,0,32,22496,1,context 22528
+8b-q6k-q80-c23k,Qwen3-8B-Q6_K.gguf,99,on,q8_0,q8_0,0,10,0,32,23520,1,context 23552
+8b-q6k-q80-c24k,Qwen3-8B-Q6_K.gguf,99,on,q8_0,q8_0,0,10,0,32,24544,1,context 24576

@@ -1,0 +1,28 @@
+2026-11-14T18:06:33.5482297+00:00 ggml_cuda_init: found 1 CUDA devices (Total VRAM: 8191 MiB):
+2026-11-14T18:06:33.5482324+00:00   Device 0: NVIDIA GeForce RTX 3060 Ti, compute capability 8.6, VMM: yes, VRAM: 8191 MiB
+2026-11-14T18:06:33.5482465+00:00 load_backend: loaded CUDA backend from /app/libggml-cuda.so
+2026-11-14T18:06:33.5551660+00:00 load_backend: loaded CPU backend from /app/libggml-cpu-haswell.so
+2026-11-14T18:06:33.5555935+00:00 llama-bench: benchmark 1/1: starting
+2026-11-14T18:06:34.5330575+00:00 llama-bench: benchmark 1/1: warmup generation run
+2026-11-14T18:06:34.5800192+00:00 llama-bench: benchmark 1/1: depth run 1/1
+2026-11-14T18:06:34.6045483+00:00 CUDA error: device not ready
+2026-11-14T18:06:34.6045504+00:00   current device: 0, in function alloc at /app/ggml/src/ggml-cuda/ggml-cuda.cu:682
+2026-11-14T18:06:34.6045520+00:00   cuMemSetAccess(start_ptr, reserve_size, access_descs.data(), access_descs.size())
+2026-11-14T18:06:34.6045521+00:00 /app/ggml/src/ggml-cuda/ggml-cuda.cu:110: CUDA error
+2026-11-14T18:06:34.6092899+00:00 libggml-base.so.0(+0x183a6)[0x7b1c1d0353a6]
+2026-11-14T18:06:34.6092925+00:00 libggml-base.so.0(+0x1882a)[0x7b1c1d03582a]
+2026-11-14T18:06:34.6092928+00:00 libggml-base.so.0(ggml_abort+0x15b)[0x7b1c1d035a0b]
+2026-11-14T18:06:34.6092930+00:00 /app/libggml-cuda.so(_Z15ggml_cuda_errorPKcS0_S0_iS0_+0xb5)[0x7b1c11f748b5]
+2026-11-14T18:06:34.6092932+00:00 /app/libggml-cuda.so(_ZN18ggml_cuda_pool_vmm5allocEmPm+0x601)[0x7b1c11f92ab1]
+2026-11-14T18:06:34.6092935+00:00 /app/libggml-cuda.so(+0xc98b85)[0x7b1c1290eb85]
+2026-11-14T18:06:34.6092948+00:00 /app/libggml-cuda.so(_Z19ggml_cuda_mul_mat_qR25ggml_backend_cuda_contextPK11ggml_tensorS3_S3_PS1_PK29ggml_cuda_mm_fusion_args_host+0x100b)[0x7b1c11fdc24b]
+2026-11-14T18:06:34.6092950+00:00 /app/libggml-cuda.so(+0x3188f4)[0x7b1c11f8e8f4]
+2026-11-14T18:06:34.6092952+00:00 libggml-base.so.0(ggml_backend_sched_graph_compute_async+0x40c)[0x7b1c1d0549cc]
+2026-11-14T18:06:34.6093260+00:00 libllama.so.0(_ZN13llama_context13graph_computeEP11ggml_cgraphb+0xdb)[0x7b1c1d353f8b]
+2026-11-14T18:06:34.6093293+00:00 libllama.so.0(_ZN13llama_context14process_ubatchERK12llama_ubatch14llm_graph_typeP22llama_memory_context_iR11ggml_status+0x134)[0x7b1c1d3578c4]
+2026-11-14T18:06:34.6093761+00:00 libllama.so.0(_ZN13llama_context6decodeERK15llama_batch_ext+0x3ba)[0x7b1c1d3616ca]
+2026-11-14T18:06:34.6093765+00:00 libllama-bench-impl.so(+0x1cb4b)[0x7b1c1dfbeb4b]
+2026-11-14T18:06:34.6093766+00:00 libllama-bench-impl.so(_Z11llama_benchiPPc+0x1159)[0x7b1c1dfcfaf9]
+2026-11-14T18:06:34.6093767+00:00 /usr/lib/x86_64-linux-gnu/libc.so.6(+0x2a1ca)[0x7b1c1db051ca]
+2026-11-14T18:06:34.6093769+00:00 /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b)[0x7b1c1db0528b]
+2026-11-14T18:06:34.6093770+00:00 /app/llama-bench(+0x1315)[0x65069a1a8315]
