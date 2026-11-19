@@ -109,6 +109,56 @@ Each model gets one row per `-ngl` value, from `0` (CPU only) to `layers + 1` (e
 | `ram_gbps`             | `64`                   | `--ram-gbps`                                                   |
 | `ceiling_tokens_per_s` | `46.4`                 | `1 / (gpu_bytes_per_token / VRAM + cpu_bytes_per_token / RAM)` |
 
+## kld.cs
+
+Measures how far each quantisation drifts from Q8_0, with `llama-perplexity`'s KL divergence, and appends one row per quant to a results CSV.
+
+```
+dotnet run tools/kld.cs -- --experiment <name> [--out <kld.csv>] [--ctx 512] [--chunks 100]
+dotnet run tools/kld.cs -- --experiment <name> --parse <run_id> [--out <kld.csv>]
+```
+
+`--out` defaults to `experiments/<experiment>/results/kld.csv`. The logs go into `raw/` next to it, as `raw/<run_id>-kld-<model>-<quant>.log`. `--parse` runs nothing: it rebuilds the rows of an earlier run from those logs.
+
+It needs two Docker volumes: `llm-models` with the models, and `llm-scratch` with the wikitext-2 test text at `/scratch/text/wiki.test.raw`. The runner checks the text's SHA-256 before it starts.
+
+For each of the Qwen3 4B and 8B, the runner:
+
+1. Runs Q8_0 with `--kl-divergence-base` to save its logits to `/scratch/logits/` in `llm-scratch`. That's about 7.7 GB per model at 512 tokens × 100 chunks.
+2. Runs Q8_0 again with `--kl-divergence` against those logits. It's a self-check: the KL divergence should be about 0 and the top token the same about 100 % of the time.
+3. Runs Q6_K, Q5_K_M and Q4_K_M with `--kl-divergence` against the same logits.
+
+Every run uses `-fa on -t 10` and `-ngl 99`, except the 8B Q8_0, which doesn't fit in 8 GB and runs with `-ngl 30`. The whole set takes about 5 minutes on the 3060 Ti.
+
+`ppl_ratio` is computed against the Q8_0 run's own final perplexity, not the `Mean PPL(base)` that the KL runs print. That one is computed from the saved logits, which are stored at reduced precision, and reads about 1 % low.
+
+| Column               | Example                | Source                                                  |
+| -------------------- | ---------------------- | ------------------------------------------------------- |
+| `run_id`             | `2026-11-19T163033`    | runner; also starts the log file names                  |
+| `model_file`         | `Qwen3-4B-Q4_K_M.gguf` | the quant being measured                                |
+| `quant`              | `Q4_K_M`               | the quant being measured                                |
+| `base_file`          | `Qwen3-4B-Q8_0.gguf`   | the model the base logits come from                     |
+| `text`               | `wikitext-2 test`      | runner                                                  |
+| `text_sha256_short`  | `173c87a5`             | first 8 characters of the text's SHA-256                |
+| `ctx`                | `512`                  | `n_ctx` in the log                                      |
+| `chunks`             | `100`                  | chunks in the log                                       |
+| `ppl`                | `16.4561`              | `Mean PPL(Q)`                                           |
+| `ppl_err`            | `0.3729`               | its `±`                                                 |
+| `ppl_base`           | `14.4136`              | `Final estimate` of the Q8_0 base run                   |
+| `ppl_ratio`          | `1.1417`               | `ppl / ppl_base`                                        |
+| `kld_mean`           | `0.134937`             | `Mean KLD`                                              |
+| `kld_mean_err`       | `0.002469`             | its `±`                                                 |
+| `kld_median`         | `0.042891`             | `Median KLD`                                            |
+| `kld_p99`            | `1.509506`             | `99.0% KLD`                                             |
+| `kld_max`            | `16.552729`            | `Maximum KLD`                                           |
+| `same_top_pct`       | `86.118`               | `Same top p`, in %                                      |
+| `same_top_err`       | `0.217`                | its `±`                                                 |
+| `rms_dp_pct`         | `10.687`               | `RMS Δp`, in %                                          |
+| `n_gpu_layers`       | `99`                   | `-ngl`                                                  |
+| `image_digest_short` | `03d61e75`             | first 8 characters of the digest in `docker/images.md`  |
+
+With `--parse`, `image_digest_short` is the image pinned now, not necessarily the one the run used.
+
 ## Benchmark results
 
 Each experiment keeps its benchmark results in `experiments/<experiment>/results/`:
