@@ -159,6 +159,38 @@ Every run uses `-fa on -t 10` and `-ngl 99`, except the 8B Q8_0, which doesn't f
 
 With `--parse`, `image_digest_short` is the image pinned now, not necessarily the one the run used.
 
+## tasks.cs
+
+Checks the task set in `tasks/`, and scores replies against it. The format and the checkers are described in `tasks/README.md`.
+
+```
+dotnet run tools/tasks.cs -- validate [--tasks tasks/tasks.jsonl]
+dotnet run tools/tasks.cs -- check --answers <answers.jsonl> [--tasks tasks/tasks.jsonl]
+```
+
+`validate` checks every line of the tasks file: the fields and their types, unique ids, the category and checker names, the type of `expected` for the checker, and that the tests and reference files exist. It prints each problem with its line number and exits with 1 if there's any.
+
+`check` validates the tasks first, then scores an answers file. That's JSON Lines with one object per task:
+
+```
+{"id": "math-train", "reply": "The train covers ...
+Answer: 205"}
+```
+
+`reply` is the model's reply as it came back. Other fields are ignored, and a task with no line counts as wrong. An unknown id or a second reply for the same id stops the check.
+
+It prints one line per task, `right` or `wrong` with a short reason, then the score per category and overall:
+
+```
+code-roman          csharp-tests  wrong  tests failed: ToRoman(4): expected "IV", got "IIII"
+ext-logs            json          wrong  services_with_errors: missing
+math-tank           number        wrong  not a plain number: 3 units
+
+code          9 of  10   90.0 %
+```
+
+Code replies run in the .NET SDK image, by digest from `docker/images.md`, with the limits in `tasks/README.md`. The tool never pulls; it stops if the image isn't on this machine. One container per code task, about 2.5 seconds each.
+
 ## Benchmark results
 
 Each experiment keeps its benchmark results in `experiments/<experiment>/results/`:

@@ -1,4 +1,4 @@
-// A correct answer for ex-code, written by hand. It shows that the tests can pass.
+// A correct answer for ex-code. It shows that the tests can pass.
 
 public static class Solution
 {

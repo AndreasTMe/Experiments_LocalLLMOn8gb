@@ -5,9 +5,10 @@ Short tasks with answers that can be checked automatically, to see whether a mod
 | File                     | Contents                                         |
 | ------------------------ | ------------------------------------------------ |
 | `tasks.jsonl`            | The task set: one task per line                  |
+| `answers.md`             | Why each expected answer is right                |
 | `examples.jsonl`         | One example task per checker, in the same format |
 | `code/<id>.tests.cs`     | Tests for a code task                            |
-| `code/<id>.reference.cs` | A hand-written correct answer to a code task     |
+| `code/<id>.reference.cs` | A correct answer to a code task                  |
 
 ## Format
 
@@ -20,7 +21,7 @@ Short tasks with answers that can be checked automatically, to see whether a mod
 | `checker`   | string                  | How the reply is scored: `csharp-tests`, `json`, `number` or `exact`. See below. |
 | `prompt`    | string                  | The task, as the user message. The runner adds the reply format for the checker. |
 | `expected`  | depends on the checker  | The right answer. See below.                                                     |
-| `reference` | string, code tasks only | Path of the hand-written correct answer, relative to `tasks/`                    |
+| `reference` | string, code tasks only | Path of a correct answer, relative to `tasks/`                                  |
 
 `category` and `checker` are separate so a category can be scored in more than one way, for example a logic puzzle with a numeric answer.
 
@@ -45,9 +46,9 @@ A reply that doesn't build fails, the same as one that fails a test. Each code t
 
 **`json`.** The JSON is the first code block in the reply, or the whole reply if there's no code block. Comparison is by value: key order doesn't matter, array order does, `328.8` equals `328.80`, and strings must match exactly. A missing key, an extra key or a `null` where a value is expected is wrong. Ask in the prompt for every key, with its type, and for `null` when a value isn't there.
 
-**`number`.** The answer is on the last line that starts with `Answer:`. Spaces, a trailing `.` and `**` around it are ignored. It must be a plain number with `.` as the decimal point: no units, currency signs or thousands separators. It's compared as a decimal, so `36.9` equals `36.90`.
+**`number`.** The answer is on the last line that starts with `Answer:`, or `**Answer:`. Spaces, a trailing `.` and `**` around it are ignored. It must be a plain number with `.` as the decimal point: no units, currency signs or thousands separators. It's compared as a decimal, so `36.9` equals `36.90`.
 
-**`exact`.** The answer is on the last line that starts with `Answer:`. Spaces, a trailing `.`, and quotes, backticks or `**` around it are ignored, and the comparison ignores case. Keep these answers to a word or a short name, and list the other spellings you'd accept.
+**`exact`.** The answer is on the last line that starts with `Answer:`, or `**Answer:`. Spaces, a trailing `.`, and quotes, backticks or `**` around it are ignored, and the comparison ignores case. Keep these answers to a word or a short name, and list the other spellings you'd accept.
 
 ## Prompt template
 
@@ -88,12 +89,15 @@ The flags are checked against `docker/help/b12030/llama-server.txt`.
 
 ## Sandbox
 
-Model-written code never runs on the host. Each `csharp-tests` reply is built and run in a throwaway container from the official .NET 10 SDK image (`mcr.microsoft.com/dotnet/sdk:10.0`), pinned by digest in `docker/images.md` once it's pulled:
+Model-written code never runs on the host. Each `csharp-tests` reply is built and run in a throwaway container from the official .NET 10 SDK image (`mcr.microsoft.com/dotnet/sdk:10.0`), pinned by digest in `docker/images.md`:
 
 - no network (`--network none`)
-- 1 GB of memory and 2 CPUs
-- 60 seconds for the build and the tests together; after that the task fails
+- 1 GB of memory, 2 CPUs and at most 256 processes
+- a read-only root file system; the project is mounted read-only and copied into a 512 MB `/tmp` to build
+- 60 seconds for the build and the tests together; after that the container is killed and the task fails
 - removed after each task, so nothing carries over from one reply to the next
+
+A task takes about 2.5 seconds. `tools/tasks.cs` runs the checkers; see `tools/README.md`.
 
 ## Examples
 
@@ -157,8 +161,10 @@ Model-written code never runs on the host. Each `csharp-tests` reply is built an
 
 ## Writing tasks
 
+The set has 30 tasks: 10 code, 8 extraction, 6 arithmetic and 6 logic. They were drafted with a model, and every expected answer was checked by hand against `answers.md`.
+
 - Every task needs exactly one right answer. If a careful person could argue for another, reword the task, or list both answers for `exact`.
 - Put everything the task needs in the prompt. The model has no files, tools or internet.
-- Write each expected answer by working the task out yourself, not by asking a model.
+- Check each expected answer by working the task out, and write the working in `answers.md`.
 - For code, test the edge cases as well as the example in the prompt, and make sure the reference answer passes.
 - Make some tasks hard. If every configuration scores 100 %, the set can't tell them apart.

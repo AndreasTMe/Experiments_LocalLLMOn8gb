@@ -39,3 +39,23 @@ Available devices:
 ```
 
 `ggml_cuda_init` reports compute capability 8.6. `nvidia-smi` also works inside the container. VRAM is still measured with `nvidia-smi` on Windows.
+
+## .NET SDK
+
+Builds and runs the code that models write, for the code tasks in `tasks/`. Nothing in it touches the GPU.
+
+| Field          | Value                                                                     |
+| -------------- | ------------------------------------------------------------------------- |
+| Image          | `mcr.microsoft.com/dotnet/sdk`                                            |
+| Tag            | `10.0`                                                                    |
+| Digest         | `sha256:bef136a371963aaa46ec97882845ef6f54dec15728bb4b128b1c2a400ffbc9b4` |
+| Local image ID | `sha256:60f22a1c6a3e598ac3feed6d9a75d4de4b859c239a2a0b3ed95b49f26b0306bf` |
+| Size           | 0.9 GB on disk                                                            |
+| SDK            | 10.0.404                                                                  |
+| Runtime        | 10.0.15                                                                   |
+| OS             | Ubuntu 24.04.5 LTS                                                        |
+| Pulled         | 2026-11-19                                                                |
+
+```
+mcr.microsoft.com/dotnet/sdk@sha256:bef136a371963aaa46ec97882845ef6f54dec15728bb4b128b1c2a400ffbc9b4
+```
