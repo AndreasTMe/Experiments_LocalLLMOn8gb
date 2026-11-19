@@ -1,0 +1,4 @@
+name,model_file,n_gpu_layers,flash_attn,cache_type_k,cache_type_v,n_cpu_moe,threads,n_prompt,n_gen,depth_tokens,repetitions,notes
+8b-q80-ngl30-t8,Qwen3-8B-Q8_0.gguf,30,on,f16,f16,0,8,512,512,0,5,8 performance cores
+8b-q80-ngl30-t10,Qwen3-8B-Q8_0.gguf,30,on,f16,f16,0,10,512,512,0,5,
+8b-q80-ngl30-t12,Qwen3-8B-Q8_0.gguf,30,on,f16,f16,0,12,512,512,0,5,all 12 physical cores

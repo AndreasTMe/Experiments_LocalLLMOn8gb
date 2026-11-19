@@ -1,0 +1,28 @@
+2026-11-18T18:34:50.0346587+00:00 ggml_cuda_init: found 1 CUDA devices (Total VRAM: 8191 MiB):
+2026-11-18T18:34:50.0346615+00:00   Device 0: NVIDIA GeForce RTX 3060 Ti, compute capability 8.6, VMM: yes, VRAM: 8191 MiB
+2026-11-18T18:34:50.0347588+00:00 load_backend: loaded CUDA backend from /app/libggml-cuda.so
+2026-11-18T18:34:50.0417240+00:00 load_backend: loaded CPU backend from /app/libggml-cpu-haswell.so
+2026-11-18T18:34:50.0422128+00:00 llama-bench: benchmark 1/2: starting
+2026-11-18T18:34:51.3432578+00:00 llama-bench: benchmark 1/2: warmup prompt run
+2026-11-18T18:34:51.6545721+00:00 llama-bench: benchmark 1/2: depth run 1/5
+2026-11-18T18:36:20.6057521+00:00 llama-bench: benchmark 1/2: prompt run 1/5
+2026-11-18T18:36:24.9609021+00:00 llama-bench: benchmark 1/2: depth run 2/5 (cached)
+2026-11-18T18:36:24.9609374+00:00 llama-bench: benchmark 1/2: prompt run 2/5
+2026-11-18T18:36:29.3207165+00:00 llama-bench: benchmark 1/2: depth run 3/5 (cached)
+2026-11-18T18:36:29.3207402+00:00 llama-bench: benchmark 1/2: prompt run 3/5
+2026-11-18T18:36:33.6544368+00:00 llama-bench: benchmark 1/2: depth run 4/5 (cached)
+2026-11-18T18:36:33.6544739+00:00 llama-bench: benchmark 1/2: prompt run 4/5
+2026-11-18T18:36:38.0095264+00:00 llama-bench: benchmark 1/2: depth run 5/5 (cached)
+2026-11-18T18:36:38.0095459+00:00 llama-bench: benchmark 1/2: prompt run 5/5
+2026-11-18T18:36:42.2424813+00:00 llama-bench: benchmark 2/2: starting
+2026-11-18T18:36:42.3141352+00:00 llama-bench: benchmark 2/2: warmup generation run
+2026-11-18T18:36:42.4861315+00:00 llama-bench: benchmark 2/2: depth run 1/5 (cached)
+2026-11-18T18:36:42.4861507+00:00 llama-bench: benchmark 2/2: generation run 1/5
+2026-11-18T18:37:00.3248983+00:00 llama-bench: benchmark 2/2: depth run 2/5 (cached)
+2026-11-18T18:37:00.3249129+00:00 llama-bench: benchmark 2/2: generation run 2/5
+2026-11-18T18:37:18.2408149+00:00 llama-bench: benchmark 2/2: depth run 3/5 (cached)
+2026-11-18T18:37:18.2408491+00:00 llama-bench: benchmark 2/2: generation run 3/5
+2026-11-18T18:37:36.1288659+00:00 llama-bench: benchmark 2/2: depth run 4/5 (cached)
+2026-11-18T18:37:36.1288966+00:00 llama-bench: benchmark 2/2: generation run 4/5
+2026-11-18T18:37:54.1239709+00:00 llama-bench: benchmark 2/2: depth run 5/5 (cached)
+2026-11-18T18:37:54.1240075+00:00 llama-bench: benchmark 2/2: generation run 5/5

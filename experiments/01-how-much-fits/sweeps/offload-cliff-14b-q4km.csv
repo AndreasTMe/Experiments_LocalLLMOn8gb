@@ -1,0 +1,11 @@
+name,model_file,n_gpu_layers,flash_attn,cache_type_k,cache_type_v,n_cpu_moe,threads,n_prompt,n_gen,depth_tokens,repetitions,notes
+14b-q4km-ngl32,Qwen3-14B-Q4_K_M.gguf,32,on,f16,f16,0,10,512,512,0,5,the fit; llama-bench -fitt 512 chose this
+14b-q4km-ngl31,Qwen3-14B-Q4_K_M.gguf,31,on,f16,f16,0,10,512,512,0,5,
+14b-q4km-ngl30,Qwen3-14B-Q4_K_M.gguf,30,on,f16,f16,0,10,512,512,0,5,
+14b-q4km-ngl29,Qwen3-14B-Q4_K_M.gguf,29,on,f16,f16,0,10,512,512,0,5,
+14b-q4km-ngl28,Qwen3-14B-Q4_K_M.gguf,28,on,f16,f16,0,10,512,512,0,5,
+14b-q4km-ngl27,Qwen3-14B-Q4_K_M.gguf,27,on,f16,f16,0,10,512,512,0,5,
+14b-q4km-ngl26,Qwen3-14B-Q4_K_M.gguf,26,on,f16,f16,0,10,512,512,0,5,
+14b-q4km-ngl24,Qwen3-14B-Q4_K_M.gguf,24,on,f16,f16,0,10,512,512,0,5,
+14b-q4km-ngl22,Qwen3-14B-Q4_K_M.gguf,22,on,f16,f16,0,10,512,512,0,5,
+14b-q4km-ngl20,Qwen3-14B-Q4_K_M.gguf,20,on,f16,f16,0,10,512,512,0,5,

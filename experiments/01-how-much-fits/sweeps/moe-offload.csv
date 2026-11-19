@@ -1,0 +1,7 @@
+name,model_file,n_gpu_layers,flash_attn,cache_type_k,cache_type_v,n_cpu_moe,threads,n_prompt,n_gen,depth_tokens,repetitions,notes
+30b-a3b-q4km-ncmoe33,Qwen3-30B-A3B-Q4_K_M.gguf,99,on,f16,f16,33,10,512,512,0,5,33 of 48 expert layers on CPU
+30b-a3b-q4km-ncmoe36,Qwen3-30B-A3B-Q4_K_M.gguf,99,on,f16,f16,36,10,512,512,0,5,36 of 48 expert layers on CPU
+30b-a3b-q4km-ncmoe39,Qwen3-30B-A3B-Q4_K_M.gguf,99,on,f16,f16,39,10,512,512,0,5,39 of 48 expert layers on CPU
+30b-a3b-q4km-ncmoe42,Qwen3-30B-A3B-Q4_K_M.gguf,99,on,f16,f16,42,10,512,512,0,5,42 of 48 expert layers on CPU
+30b-a3b-q4km-ncmoe45,Qwen3-30B-A3B-Q4_K_M.gguf,99,on,f16,f16,45,10,512,512,0,5,45 of 48 expert layers on CPU
+30b-a3b-q4km-ncmoe48,Qwen3-30B-A3B-Q4_K_M.gguf,99,on,f16,f16,48,10,512,512,0,5,48 of 48 expert layers on CPU

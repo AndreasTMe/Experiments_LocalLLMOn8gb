@@ -128,11 +128,13 @@ using (var inspect = Process.Start(inspectInfo) ?? throw new InvalidOperationExc
 
 var manifest = ReadCsv("models/models.csv").ToDictionary(row => row["file_name"]);
 
-// Written by tools/ceiling.cs, next to the results file. Keyed by model file and number of GPU layers.
+// Written by tools/ceiling.cs, next to the results file. Keyed by model file, -ngl and --n-cpu-moe.
 string ceilingsPath = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(outPath))!, "ceilings.csv");
 var ceilings = File.Exists(ceilingsPath)
     ? ReadCsv(ceilingsPath).ToDictionary(
-        row => (row["model_file"], int.Parse(row["n_gpu_layers"], CultureInfo.InvariantCulture)),
+        row => (row["model_file"],
+            int.Parse(row["n_gpu_layers"], CultureInfo.InvariantCulture),
+            int.Parse(row["n_cpu_moe"], CultureInfo.InvariantCulture)),
         row => row["ceiling_tokens_per_s"])
     : null;
 if (ceilings is null)
@@ -379,16 +381,17 @@ return 0;
 }
 
 // The decode ceiling for a tg row. Empty for pp rows, because prefill isn't limited by memory bandwidth the
-// same way, and for --n-cpu-moe runs, which tools/ceiling.cs doesn't cover. -ngl 99 means "all layers", so
-// anything above the model's layer count is looked up as all of them.
+// same way. -ngl counts the output layer, so layers + 1 is "all of them", and anything above that (like
+// -ngl 99) is looked up as layers + 1. ceilings.csv has --n-cpu-moe rows only with every layer on the GPU,
+// so other combinations stay empty.
 string Ceiling(string modelFile, int gpuLayers, int cpuMoe)
 {
-    if (ceilings is null || cpuMoe > 0)
+    if (ceilings is null)
     {
         return "";
     }
     int layers = int.Parse(manifest[modelFile]["layers"], CultureInfo.InvariantCulture);
-    return ceilings.TryGetValue((modelFile, Math.Min(gpuLayers, layers)), out string? ceiling) ? ceiling : "";
+    return ceilings.TryGetValue((modelFile, Math.Min(gpuLayers, layers + 1), cpuMoe), out string? ceiling) ? ceiling : "";
 }
 
 static List<Dictionary<string, string>> ReadCsv(string path)

@@ -1,0 +1,12 @@
+name,model_file,n_gpu_layers,flash_attn,cache_type_k,cache_type_v,n_cpu_moe,threads,n_prompt,n_gen,depth_tokens,repetitions,notes
+8b-q80-ngl34,Qwen3-8B-Q8_0.gguf,34,on,f16,f16,0,10,512,512,0,5,above the fit; may not load
+8b-q80-ngl32,Qwen3-8B-Q8_0.gguf,32,on,f16,f16,0,10,512,512,0,5,above the fit; may not load
+8b-q80-ngl30,Qwen3-8B-Q8_0.gguf,30,on,f16,f16,0,10,512,512,0,5,the fit; llama-bench -fitt 512 chose this
+8b-q80-ngl29,Qwen3-8B-Q8_0.gguf,29,on,f16,f16,0,10,512,512,0,5,
+8b-q80-ngl28,Qwen3-8B-Q8_0.gguf,28,on,f16,f16,0,10,512,512,0,5,
+8b-q80-ngl27,Qwen3-8B-Q8_0.gguf,27,on,f16,f16,0,10,512,512,0,5,
+8b-q80-ngl26,Qwen3-8B-Q8_0.gguf,26,on,f16,f16,0,10,512,512,0,5,
+8b-q80-ngl24,Qwen3-8B-Q8_0.gguf,24,on,f16,f16,0,10,512,512,0,5,
+8b-q80-ngl22,Qwen3-8B-Q8_0.gguf,22,on,f16,f16,0,10,512,512,0,5,
+8b-q80-ngl20,Qwen3-8B-Q8_0.gguf,20,on,f16,f16,0,10,512,512,0,5,
+8b-q80-ngl18,Qwen3-8B-Q8_0.gguf,18,on,f16,f16,0,10,512,512,0,5,

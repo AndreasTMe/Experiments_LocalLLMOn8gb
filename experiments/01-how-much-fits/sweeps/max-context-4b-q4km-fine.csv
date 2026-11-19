@@ -1,0 +1,10 @@
+name,model_file,n_gpu_layers,flash_attn,cache_type_k,cache_type_v,n_cpu_moe,threads,n_prompt,n_gen,depth_tokens,repetitions,notes
+4b-q4km-f16-c28k,Qwen3-4B-Q4_K_M.gguf,99,on,f16,f16,0,10,0,32,28640,1,context 28672
+4b-q4km-f16-c29k,Qwen3-4B-Q4_K_M.gguf,99,on,f16,f16,0,10,0,32,29664,1,context 29696
+4b-q4km-f16-c30k,Qwen3-4B-Q4_K_M.gguf,99,on,f16,f16,0,10,0,32,30688,1,context 30720
+4b-q4km-f16-c31k,Qwen3-4B-Q4_K_M.gguf,99,on,f16,f16,0,10,0,32,31712,1,context 31744
+4b-q4km-f16-c32k,Qwen3-4B-Q4_K_M.gguf,99,on,f16,f16,0,10,0,32,32736,1,context 32768
+4b-q4km-f16-c33k,Qwen3-4B-Q4_K_M.gguf,99,on,f16,f16,0,10,0,32,33760,1,context 33792
+4b-q4km-f16-c34k,Qwen3-4B-Q4_K_M.gguf,99,on,f16,f16,0,10,0,32,34784,1,context 34816
+4b-q4km-f16-c35k,Qwen3-4B-Q4_K_M.gguf,99,on,f16,f16,0,10,0,32,35808,1,context 35840
+4b-q4km-f16-c36k,Qwen3-4B-Q4_K_M.gguf,99,on,f16,f16,0,10,0,32,36832,1,context 36864
