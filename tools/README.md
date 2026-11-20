@@ -38,10 +38,12 @@ Runs until Ctrl+C, or for `--duration-s` seconds. Every row is flushed as it's w
 Runs a sweep of `llama-bench` configurations in the pinned llama.cpp image and appends one row per test to a results CSV, in the columns below.
 
 ```
-dotnet run tools/bench.cs -- --sweep <sweep.csv> --experiment <name> [--out <results.csv>] [--cool-to-c 45] [--cool-timeout-s 900]
+dotnet run tools/bench.cs -- --sweep <sweep.csv> --experiment <name> [--out <results.csv>] [--cool-to-c 45] [--cool-timeout-s 900] [--native <dir>] [--models-dir staging/models]
 ```
 
 `--out` defaults to `experiments/<experiment>/results/bench.csv`. The raw files go into `raw/` next to it.
+
+`--native <dir>` runs `llama-bench.exe` from that folder on the host instead of the image, with the models from `--models-dir` (`staging/models` by default). Its flags were checked against `docker/help/b12030-win-cuda-12.4/llama-bench.txt`, and they match the image's except for one extra, `-rpc`, and the default thread count, which the runner always sets anyway. `image_digest` is `native` in its rows.
 
 The sweep file has one configuration per line, one value per column:
 

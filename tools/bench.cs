@@ -2,6 +2,9 @@
 //
 // Usage:
 //   dotnet run tools/bench.cs -- --sweep <sweep.csv> --experiment <name> [--out <results.csv>] [--cool-to-c 45] [--cool-timeout-s 900]
+//                                [--native <dir with llama-bench.exe>] [--models-dir staging/models]
+//
+// With --native it runs a llama-bench.exe on the host instead of the image, with the models from --models-dir.
 //
 // Run it from the repo root. For each configuration in the sweep file it waits for the GPU to cool down,
 // runs llama-bench once (pp and tg as separate tests), keeps the raw JSON and log, and joins the GPU samples
@@ -73,6 +76,8 @@ string? outPath = null;
 // 10 minutes to reach because the fans stop at low temperatures; 45 °C takes about 3.
 int coolToC = 45;
 int coolTimeoutS = 900;
+string? nativeDirectory = null;
+string modelsDirectory = Path.Combine("staging", "models");
 
 for (int i = 0; i < args.Length; i++)
 {
@@ -85,13 +90,15 @@ for (int i = 0; i < args.Length; i++)
         case "--out": outPath = Next(); break;
         case "--cool-to-c": coolToC = int.Parse(Next(), CultureInfo.InvariantCulture); break;
         case "--cool-timeout-s": coolTimeoutS = int.Parse(Next(), CultureInfo.InvariantCulture); break;
+        case "--native": nativeDirectory = Next(); break;
+        case "--models-dir": modelsDirectory = Next(); break;
         default: throw new ArgumentException($"Unknown argument: {args[i]}");
     }
 }
 
 if (string.IsNullOrWhiteSpace(sweepPath) || string.IsNullOrWhiteSpace(experiment))
 {
-    Console.Error.WriteLine("Usage: dotnet run tools/bench.cs -- --sweep <sweep.csv> --experiment <name> [--out <results.csv>] [--cool-to-c 45] [--cool-timeout-s 900]");
+    Console.Error.WriteLine("Usage: dotnet run tools/bench.cs -- --sweep <sweep.csv> --experiment <name> [--out <results.csv>] [--cool-to-c 45] [--cool-timeout-s 900] [--native <dir>] [--models-dir staging/models]");
     return 1;
 }
 
@@ -106,7 +113,13 @@ if (image.Length == 0)
     Console.Error.WriteLine("No llama.cpp image digest found in docker/images.md.");
     return 1;
 }
-string imageDigest = image[(image.IndexOf('@') + 1)..];
+string imageDigest = nativeDirectory is null ? image[(image.IndexOf('@') + 1)..] : "native";
+string nativeBench = nativeDirectory is null ? "" : Path.GetFullPath(Path.Combine(nativeDirectory, "llama-bench.exe"));
+if (nativeDirectory is not null && !File.Exists(nativeBench))
+{
+    Console.Error.WriteLine($"No llama-bench.exe in {nativeDirectory}.");
+    return 1;
+}
 
 // The runner never pulls. Stop here if the pinned image isn't on this machine.
 var inspectInfo = new ProcessStartInfo("docker") { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
@@ -114,8 +127,9 @@ foreach (string argument in new[] { "image", "inspect", image })
 {
     inspectInfo.ArgumentList.Add(argument);
 }
-using (var inspect = Process.Start(inspectInfo) ?? throw new InvalidOperationException("Couldn't start docker."))
+if (nativeDirectory is null)
 {
+    using var inspect = Process.Start(inspectInfo) ?? throw new InvalidOperationException("Couldn't start docker.");
     inspect.StandardOutput.ReadToEnd();
     inspect.StandardError.ReadToEnd();
     inspect.WaitForExit();
@@ -158,6 +172,11 @@ foreach (var config in configs)
     if (!manifest.ContainsKey(config["model_file"]))
     {
         Console.Error.WriteLine($"{config["model_file"]} isn't in models/models.csv.");
+        return 1;
+    }
+    if (nativeDirectory is not null && !File.Exists(Path.Combine(modelsDirectory, config["model_file"])))
+    {
+        Console.Error.WriteLine($"{config["model_file"]} isn't in {modelsDirectory}.");
         return 1;
     }
 }
@@ -318,21 +337,28 @@ return 0;
 
 (int ExitCode, string Json, List<(DateTimeOffset Time, string Text)> Log) RunLlamaBench(Dictionary<string, string> config)
 {
-    // Every flag is checked against docker/help/b12030/llama-bench.txt.
+    // Every flag is checked against docker/help/b12030/llama-bench.txt, and for the native build against
+    // docker/help/b12030-win-cuda-12.4/llama-bench.txt.
     // llama-bench does its own warm-up run before each test, so the runner doesn't add one.
-    var info = new ProcessStartInfo("docker")
+    var info = new ProcessStartInfo(nativeDirectory is null ? "docker" : nativeBench)
     {
         UseShellExecute = false,
         RedirectStandardOutput = true,
         RedirectStandardError = true,
     };
+    string[] launch = nativeDirectory is null
+        ?
+        [
+            "run", "--rm", "--pull", "never", "--gpus", "all",
+            "-v", "llm-models:/models:ro",
+            "--entrypoint", "/app/llama-bench",
+            image,
+            "-m", $"/models/{config["model_file"]}",
+        ]
+        : ["-m", Path.GetFullPath(Path.Combine(modelsDirectory, config["model_file"]))];
     string[] arguments =
     [
-        "run", "--rm", "--pull", "never", "--gpus", "all",
-        "-v", "llm-models:/models:ro",
-        "--entrypoint", "/app/llama-bench",
-        image,
-        "-m", $"/models/{config["model_file"]}",
+        .. launch,
         "-ngl", config["n_gpu_layers"],
         "-fa", config["flash_attn"],
         "-ctk", config["cache_type_k"],
