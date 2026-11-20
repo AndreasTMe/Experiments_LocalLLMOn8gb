@@ -1,0 +1,31 @@
+id,category,checker,right,finish_reason,prompt_tokens,completion_tokens,seconds,tokens_per_s,detail
+code-brackets,code,csharp-tests,1,stop,152,160,1.503,112.23,
+code-roman,code,csharp-tests,0,stop,143,192,1.774,111.93,"build failed: /tmp/w/Solution.cs(12,26): error CS0246: The type or namespace name 'StringBuilder' could not be found (are you missing a using directive or an assembly reference?) [/tmp/w/task.csproj]"
+code-intervals,code,csharp-tests,1,stop,214,173,1.626,111.55,
+code-top-words,code,csharp-tests,0,stop,180,193,1.802,111.62,"tests failed: TopWords(""it's a dog's life"", 3): expected [s,a,dog], got [a,dog's,it's]"
+code-duration,code,csharp-tests,0,stop,215,334,3.093,110.77,tests failed: Unhandled exception. System.FormatException: The input string '' was not in a correct format.
+code-spiral,code,csharp-tests,1,stop,209,314,2.924,110.85,
+code-rpn,code,csharp-tests,1,stop,173,169,1.599,111.49,
+code-edit-distance,code,csharp-tests,1,stop,139,248,2.284,111.68,
+code-versions,code,csharp-tests,1,stop,194,156,1.478,111.36,
+code-calculator,code,csharp-tests,0,stop,197,448,4.129,110.54,"tests failed: Evaluate(""1+2""): expected 3, got 1"
+ext-meeting,extraction,json,1,stop,227,73,0.766,110.54,
+ext-shipping,extraction,json,1,stop,227,87,0.873,109.48,
+ext-signature,extraction,json,1,stop,196,67,0.676,111.15,
+ext-logs,extraction,json,0,stop,343,56,0.614,109.93,"first_error: expected ""2026-09-02T08:14:09Z"", got ""2026-09-02T08:14:03Z"""
+ext-recipe,extraction,json,0,stop,242,39,0.437,110.49,"total_time_minutes: expected 95, got 75"
+ext-statement,extraction,json,0,stop,292,83,0.841,110.76,"iban: expected ""GB33BUKB20201555555555"", got ""GB33BUKB202015555555"""
+ext-lamp,extraction,json,0,stop,195,70,0.702,111.72,"dimensions_mm.width: expected 140, got 14"
+ext-job,extraction,json,0,stop,222,89,0.866,111.68,"title: expected ""Backend Developer"", got ""Backend Developer (C#/.NET)"""
+math-train,arithmetic,number,1,stop,94,108,1.009,112.44,
+math-price,arithmetic,number,1,stop,102,114,1.055,112.75,
+math-interest,arithmetic,number,1,stop,100,272,2.487,111.41,
+math-tank,arithmetic,number,1,stop,117,255,2.34,111.86,
+math-multiples,arithmetic,number,0,stop,95,596,5.42,111.05,got 234033
+math-fuel,arithmetic,number,0,stop,117,216,2.014,111.69,got 81.21
+logic-weekday,logic,exact,1,stop,66,36,0.366,112.08,
+logic-knights,logic,exact,1,stop,124,442,4.019,111.04,
+logic-race,logic,exact,0,stop,106,411,3.759,111.36,got Petra
+logic-sevens,logic,number,1,stop,86,278,2.551,111.72,
+logic-club,logic,exact,0,stop,79,217,1.993,111.7,got Wednesday
+logic-houses,logic,exact,0,length,204,1024,9.471,108.94,no Answer: line

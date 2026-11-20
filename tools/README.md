@@ -161,11 +161,14 @@ With `--parse`, `image_digest_short` is the image pinned now, not necessarily th
 
 ## tasks.cs
 
-Checks the task set in `tasks/`, and scores replies against it. The format and the checkers are described in `tasks/README.md`.
+Checks the task set in `tasks/`, scores replies against it, and runs it against a model in `llama-server`. The format, the checkers, the prompt and the generation settings are described in `tasks/README.md`.
 
 ```
 dotnet run tools/tasks.cs -- validate [--tasks tasks/tasks.jsonl]
 dotnet run tools/tasks.cs -- check --answers <answers.jsonl> [--tasks tasks/tasks.jsonl]
+dotnet run tools/tasks.cs -- run --experiment <name> --model <file.gguf> [--out <tasks.csv>]
+    [--gpu-layers 99] [--ctx 4096] [--flash-attn on] [--cache-type-k f16] [--cache-type-v f16]
+    [--n-cpu-moe 0] [--threads 10] [--port 8090] [--tasks tasks/tasks.jsonl]
 ```
 
 `validate` checks every line of the tasks file: the fields and their types, unique ids, the category and checker names, the type of `expected` for the checker, and that the tests and reference files exist. It prints each problem with its line number and exits with 1 if there's any.
@@ -190,6 +193,24 @@ code          9 of  10   90.0 %
 ```
 
 Code replies run in the .NET SDK image, by digest from `docker/images.md`, with the limits in `tasks/README.md`. The tool never pulls; it stops if the image isn't on this machine. One container per code task, about 2.5 seconds each.
+
+### run
+
+`run` validates the tasks, then starts `llama-server` in the pinned llama.cpp image, by digest, with the model from the `llm-models` volume and the configuration given. The model has to be in `models/models.csv`. The server listens on `127.0.0.1:<port>` only, and its log goes to a file. The tool waits up to 120 seconds for `/health`, then sends the tasks one at a time to `/v1/chat/completions`, with 300 seconds per request. If the server stops, isn't ready in time, or a request fails, the run stops and exits with 1. The server is stopped before the replies are scored, so the code checks don't share the machine with it.
+
+With `--experiment <name>`, the summary row goes to `experiments/<name>/results/tasks.csv` unless `--out` says otherwise. The other files go to `raw/` next to it, named after the run id, `<yyyy-MM-ddTHHmmss>-<model file without .gguf>`:
+
+| File                     | What's in it                                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------------------------ |
+| `<run_id>-answers.jsonl` | one line per task: `id`, `reply`, `finish_reason`, `prompt_tokens`, `completion_tokens`, `seconds`; `check` reads it as it is |
+| `<run_id>-tasks.csv`     | one row per task: `id`, `category`, `checker`, `right`, `finish_reason`, `prompt_tokens`, `completion_tokens`, `seconds`, `tokens_per_s`, `detail` |
+| `<run_id>-server.log`    | the server's output                                                                              |
+
+`detail` is the reason a task is wrong, quoted when it has a comma in it. `tokens_per_s` is the server's own generation speed for that reply.
+
+The summary row has the configuration (`model_file`, `quant`, `n_gpu_layers`, `ctx`, `flash_attn`, `cache_type_k`, `cache_type_v`, `n_cpu_moe`, `threads`), the score (`tasks`, `right`, `score_pct` and `code_pct`, `extraction_pct`, `arithmetic_pct`, `logic_pct`), `cut_off` (replies that hit the token limit), `completion_tokens` and `generation_s` summed over the tasks, `started_at`, `ended_at`, and the first 8 hex characters of the tasks file's SHA-256 and of the image digest. The header is written when the file is new.
+
+On Qwen3-4B Q4_K_M with every layer on the GPU, a run takes about 70 seconds for the replies plus about 25 seconds for the code checks. Two runs gave the same reply for every task, byte for byte.
 
 ## Benchmark results
 

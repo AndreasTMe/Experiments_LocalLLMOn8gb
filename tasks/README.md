@@ -75,15 +75,19 @@ The chat template is the one built into each GGUF.
 
 The same for every task and every configuration, so a score changes only because the model or its configuration changed.
 
-| Setting      | Value | Where                                                       |
-| ------------ | ----- | ----------------------------------------------------------- |
-| Temperature  | `0`   | `--temp 0` on the server, and `temperature` in each request |
-| Max tokens   | 1024  | `max_tokens` in each request                                |
-| Thinking     | off   | `--reasoning off` on the server                             |
-| Seed         | 42    | `--seed 42`; it doesn't matter at temperature 0             |
-| Server slots | 1     | `-np 1`, so every request is processed the same way         |
+| Setting       | Value           | Where                                                                |
+| ------------- | --------------- | -------------------------------------------------------------------- |
+| Temperature   | `0`             | `--temp 0` on the server, and `temperature` in each request          |
+| Max tokens    | 1024            | `max_tokens` in each request                                         |
+| Thinking      | off             | `--reasoning off` on the server                                      |
+| Seed          | 42              | `--seed 42`; it doesn't matter at temperature 0                      |
+| Server slots  | 1               | `-np 1`, so every request is processed the same way                  |
+| Prompt cache  | off             | `--no-cache-prompt`, so a reply doesn't depend on the task before it |
+| Chat template | the model's own | the one built into the GGUF; no `--chat-template`                    |
 
 Temperature 0 is greedy decoding: the most likely token every time, so a configuration gives the same replies on every run. Thinking is off because it makes replies much longer and slower, and the score would then depend on the token budget more than on the quantisation. A reply cut off at 1024 tokens is scored as it is, which usually means wrong.
+
+The server also runs with `-fit off`, so the configuration is used exactly as given: if it doesn't fit, the server fails to start instead of quietly moving layers off the GPU. `--reasoning-format none` leaves anything the model thinks in the reply, where the checkers remove `<think>` blocks.
 
 The flags are checked against `docker/help/b12030/llama-server.txt`.
 

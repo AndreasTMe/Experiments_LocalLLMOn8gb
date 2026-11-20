@@ -7,19 +7,43 @@
 // text of the model's reply. Other fields on a line are ignored. A task with no line in the file counts as wrong.
 // Code replies are built and tested in the pinned .NET SDK image, never on the host.
 //
+// run starts llama-server in the pinned llama.cpp image with one configuration, asks it every task, stops it, and
+// scores the replies like check. It saves the answers, a per-task CSV and the server log in raw/ next to the results
+// CSV, and appends one summary row to the results CSV.
+//
 // Usage: dotnet run tools/tasks.cs -- validate [--tasks tasks/tasks.jsonl]
 //        dotnet run tools/tasks.cs -- check --answers <answers.jsonl> [--tasks tasks/tasks.jsonl]
+//        dotnet run tools/tasks.cs -- run --experiment <name> --model <file.gguf> [--out <tasks.csv>]
+//            [--gpu-layers 99] [--ctx 4096] [--flash-attn on] [--cache-type-k f16] [--cache-type-v f16]
+//            [--n-cpu-moe 0] [--threads 10] [--port 8090] [--tasks tasks/tasks.jsonl]
 //
-// Needs Docker and the pinned .NET SDK image for check. Run it from the repo root.
+// Needs Docker and the pinned .NET SDK image for check and run, and also the pinned llama.cpp image and the
+// llm-models volume for run. Run it from the repo root.
 
 using System.Diagnostics;
 using System.Globalization;
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
 const int SandboxTimeoutSeconds = 60;
 const int BuildFailedExitCode = 100;
+
+// The generation settings in tasks/README.md. They're the same for every task and every configuration.
+const int MaxTokens = 1024;
+const int Seed = 42;
+const int HealthTimeoutSeconds = 120;
+const int RequestTimeoutSeconds = 300;
+const string SystemPrompt = "You are a careful assistant. Follow the reply format exactly.";
+var formatLines = new Dictionary<string, string>
+{
+    ["csharp-tests"] = "Reply with one csharp code block that contains a public static class Solution with the method above. No namespace, no Main method, no top-level statements. Use only the .NET standard library.",
+    ["json"]         = "Reply with only the JSON object, in one json code block.",
+    ["number"]       = "You can show your working. End with a last line of the form \"Answer: <number>\", with the number only: no units, currency signs or thousands separators.",
+    ["exact"]        = "You can show your working. End with a last line of the form \"Answer: <answer>\".",
+};
 
 string[] categories = ["code", "extraction", "arithmetic", "logic"];
 string[] checkers = ["csharp-tests", "json", "number", "exact"];
@@ -42,6 +66,17 @@ Console.OutputEncoding = Encoding.UTF8;
 string mode = args.Length > 0 ? args[0] : "";
 string tasksPath = Path.Combine("tasks", "tasks.jsonl");
 string? answersPath = null;
+string? experiment = null;
+string? modelFile = null;
+string? outPath = null;
+string gpuLayers = "99";
+string ctx = "4096";
+string flashAttn = "on";
+string cacheTypeK = "f16";
+string cacheTypeV = "f16";
+string nCpuMoe = "0";
+string threads = "10";
+string port = "8090";
 
 for (int i = 1; i < args.Length; i++)
 {
@@ -50,16 +85,32 @@ for (int i = 1; i < args.Length; i++)
     {
         case "--tasks": tasksPath = Next(); break;
         case "--answers": answersPath = Next(); break;
+        case "--experiment": experiment = Next(); break;
+        case "--model": modelFile = Next(); break;
+        case "--out": outPath = Next(); break;
+        case "--gpu-layers": gpuLayers = Next(); break;
+        case "--ctx": ctx = Next(); break;
+        case "--flash-attn": flashAttn = Next(); break;
+        case "--cache-type-k": cacheTypeK = Next(); break;
+        case "--cache-type-v": cacheTypeV = Next(); break;
+        case "--n-cpu-moe": nCpuMoe = Next(); break;
+        case "--threads": threads = Next(); break;
+        case "--port": port = Next(); break;
         default:
             Console.Error.WriteLine($"Unknown argument {args[i]}");
             return 1;
     }
 }
 
-if (mode is not ("validate" or "check") || (mode == "check" && answersPath is null))
+if (mode is not ("validate" or "check" or "run")
+    || (mode == "check" && answersPath is null)
+    || (mode == "run" && (experiment is null || modelFile is null)))
 {
     Console.Error.WriteLine("Usage: dotnet run tools/tasks.cs -- validate [--tasks tasks/tasks.jsonl]");
     Console.Error.WriteLine("       dotnet run tools/tasks.cs -- check --answers <answers.jsonl> [--tasks tasks/tasks.jsonl]");
+    Console.Error.WriteLine("       dotnet run tools/tasks.cs -- run --experiment <name> --model <file.gguf> [--out <tasks.csv>]");
+    Console.Error.WriteLine("           [--gpu-layers 99] [--ctx 4096] [--flash-attn on] [--cache-type-k f16] [--cache-type-v f16]");
+    Console.Error.WriteLine("           [--n-cpu-moe 0] [--threads 10] [--port 8090] [--tasks tasks/tasks.jsonl]");
     return 1;
 }
 
@@ -213,88 +264,349 @@ if (mode == "validate")
 
 // ---- check ----
 
-var replies = new Dictionary<string, string>();
-string[] answerLines = File.ReadAllLines(answersPath!, Encoding.UTF8);
-for (int n = 0; n < answerLines.Length; n++)
-{
-    if (answerLines[n].Trim().Length == 0)
-    {
-        continue;
-    }
-    var answer = JsonDocument.Parse(answerLines[n]).RootElement;
-    string? id = StringField(answer, "id");
-    string? reply = StringField(answer, "reply");
-    if (id is null || reply is null)
-    {
-        Console.Error.WriteLine($"{answersPath} line {n + 1}: needs a string id and a string reply.");
-        return 1;
-    }
-    if (!ids.Contains(id))
-    {
-        Console.Error.WriteLine($"{answersPath} line {n + 1}: no task with id {id}.");
-        return 1;
-    }
-    if (!replies.TryAdd(id, reply))
-    {
-        Console.Error.WriteLine($"{answersPath} line {n + 1}: a second reply for {id}.");
-        return 1;
-    }
-}
-
-string? image = null;
+// Code replies run in the .NET SDK image, so it has to be here before anything starts.
+string? sdkImage = null;
 if (tasks.Any(t => t.GetProperty("checker").GetString() == "csharp-tests"))
 {
-    // The image is always started by digest. docker/images.md is the one place the digest is written down.
-    image = Regex.Match(File.ReadAllText("docker/images.md"), @"mcr\.microsoft\.com/dotnet/sdk@sha256:[0-9a-f]{64}").Value;
-    if (image.Length == 0)
+    sdkImage = PinnedImage(@"mcr\.microsoft\.com/dotnet/sdk@sha256:[0-9a-f]{64}", ".NET SDK");
+    if (sdkImage is null)
     {
-        Console.Error.WriteLine("No .NET SDK image digest found in docker/images.md.");
-        return 1;
-    }
-
-    // The checker never pulls. Stop here if the pinned image isn't on this machine.
-    if (Docker(["image", "inspect", image]).ExitCode != 0)
-    {
-        Console.Error.WriteLine($"The image {image} isn't on this machine.");
         return 1;
     }
 }
 
-int idWidth = tasks.Max(t => t.GetProperty("id").GetString()!.Length);
-var results = new List<(string Category, bool Right)>();
-foreach (var task in tasks)
+if (mode == "check")
 {
-    string id = task.GetProperty("id").GetString()!;
-    string category = task.GetProperty("category").GetString()!;
-    string checker = task.GetProperty("checker").GetString()!;
-    var expected = task.GetProperty("expected");
-
-    bool right = false;
-    string detail = "no reply";
-    if (replies.TryGetValue(id, out string? rawReply))
+    var replies = new Dictionary<string, string>();
+    string[] answerLines = File.ReadAllLines(answersPath!, Encoding.UTF8);
+    for (int n = 0; n < answerLines.Length; n++)
     {
-        string reply = StripThinking(rawReply);
-        (right, detail) = checker switch
+        if (answerLines[n].Trim().Length == 0)
         {
-            "csharp-tests" => CheckCode(reply, Path.Combine(tasksDirectory, expected.GetString()!)),
-            "json" => CheckJson(reply, expected),
-            "number" => CheckNumber(reply, expected.GetDecimal()),
-            _ => CheckExact(reply, expected),
-        };
+            continue;
+        }
+        var answer = JsonDocument.Parse(answerLines[n]).RootElement;
+        string? id = StringField(answer, "id");
+        string? reply = StringField(answer, "reply");
+        if (id is null || reply is null)
+        {
+            Console.Error.WriteLine($"{answersPath} line {n + 1}: needs a string id and a string reply.");
+            return 1;
+        }
+        if (!ids.Contains(id))
+        {
+            Console.Error.WriteLine($"{answersPath} line {n + 1}: no task with id {id}.");
+            return 1;
+        }
+        if (!replies.TryAdd(id, reply))
+        {
+            Console.Error.WriteLine($"{answersPath} line {n + 1}: a second reply for {id}.");
+            return 1;
+        }
     }
 
-    results.Add((category, right));
-    Console.WriteLine($"{id.PadRight(idWidth)}  {checker,-12}  {(right ? "right" : "wrong")}  {detail}");
+    PrintScores(ScoreAll(replies));
+    return 0;
+}
+
+// ---- run ----
+
+outPath ??= Path.Combine("experiments", experiment!, "results", "tasks.csv");
+string rawDirectory = Path.Combine(Path.GetDirectoryName(outPath) ?? ".", "raw");
+Directory.CreateDirectory(rawDirectory);
+
+var modelRow = ReadCsv(Path.Combine("models", "models.csv")).FirstOrDefault(row => row["file_name"] == modelFile);
+if (modelRow is null)
+{
+    Console.Error.WriteLine($"{modelFile} isn't in models/models.csv.");
+    return 1;
+}
+
+string? llamaImage = PinnedImage(@"ghcr\.io/ggml-org/llama\.cpp@sha256:[0-9a-f]{64}", "llama.cpp");
+if (llamaImage is null)
+{
+    return 1;
+}
+
+string runId = $"{DateTime.Now:yyyy-MM-ddTHHmmss}-{Path.GetFileNameWithoutExtension(modelFile)}";
+string serverLogPath = Path.Combine(rawDirectory, $"{runId}-server.log");
+string serverName = "tasks-server-" + Guid.NewGuid().ToString("N");
+string baseUrl = $"http://127.0.0.1:{port}";
+Console.WriteLine($"Run {runId}");
+
+// Every flag is checked against docker/help/b12030/llama-server.txt.
+// -fit off: the configuration is used as given, so a run fails rather than quietly getting fewer GPU layers.
+// --no-cache-prompt: every request is processed from scratch, so a reply doesn't depend on the task before it.
+// --reasoning-format none: anything the model thinks stays in the reply, where the checkers remove it.
+string[] serverArguments =
+[
+    "run", "--rm", "--pull", "never", "--name", serverName, "--gpus", "all",
+    "-v", "llm-models:/models:ro",
+    "-p", $"127.0.0.1:{port}:8080",
+    "--entrypoint", "/app/llama-server",
+    llamaImage,
+    "-m", $"/models/{modelFile}",
+    "-ngl", gpuLayers,
+    "-fa", flashAttn,
+    "-c", ctx,
+    "-ctk", cacheTypeK,
+    "-ctv", cacheTypeV,
+    "-ncmoe", nCpuMoe,
+    "-t", threads,
+    "-fit", "off",
+    "-np", "1",
+    "--temp", "0",
+    "--seed", Seed.ToString(CultureInfo.InvariantCulture),
+    "--reasoning", "off",
+    "--reasoning-format", "none",
+    "--no-cache-prompt",
+    "--no-webui",
+    "--host", "0.0.0.0",
+    "--port", "8080",
+];
+
+var serverInfo = new ProcessStartInfo("docker")
+{
+    UseShellExecute        = false,
+    RedirectStandardOutput = true,
+    RedirectStandardError  = true,
+    StandardOutputEncoding = Encoding.UTF8,
+    StandardErrorEncoding  = Encoding.UTF8,
+};
+foreach (string argument in serverArguments)
+{
+    serverInfo.ArgumentList.Add(argument);
+}
+
+var answers = new Dictionary<string, Answer>();
+var started = DateTimeOffset.Now;
+using (var serverLog = new StreamWriter(serverLogPath) { AutoFlush = true })
+using (var server = Process.Start(serverInfo) ?? throw new InvalidOperationException("Couldn't start docker."))
+{
+    void Log(object _, DataReceivedEventArgs e)
+    {
+        if (e.Data is not null)
+        {
+            lock (serverLog)
+            {
+                serverLog.WriteLine(e.Data);
+            }
+        }
+    }
+    server.OutputDataReceived += Log;
+    server.ErrorDataReceived += Log;
+    server.BeginOutputReadLine();
+    server.BeginErrorReadLine();
+    Console.CancelKeyPress += (_, _) => Docker(["stop", serverName]);
+
+    try
+    {
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(RequestTimeoutSeconds) };
+
+        // The health endpoint answers 503 while the model loads and 200 once it's ready.
+        Console.WriteLine($"Starting llama-server with {modelFile}");
+        var loading = Stopwatch.StartNew();
+        while (true)
+        {
+            if (server.HasExited)
+            {
+                throw new InvalidOperationException($"llama-server stopped while loading. See {serverLogPath}.");
+            }
+            if (loading.Elapsed > TimeSpan.FromSeconds(HealthTimeoutSeconds))
+            {
+                throw new TimeoutException($"llama-server wasn't ready after {HealthTimeoutSeconds} s. See {serverLogPath}.");
+            }
+            try
+            {
+                using var healthTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                using var health = await http.GetAsync($"{baseUrl}/health", healthTimeout.Token);
+                if (health.IsSuccessStatusCode)
+                {
+                    break;
+                }
+            }
+            catch (Exception e) when (e is HttpRequestException or OperationCanceledException)
+            {
+                // Not listening yet.
+            }
+            await Task.Delay(1000);
+        }
+        Console.WriteLine($"Ready after {loading.Elapsed.TotalSeconds:0} s");
+
+        int idWidth = tasks.Max(t => t.GetProperty("id").GetString()!.Length);
+        foreach (var task in tasks)
+        {
+            string id = task.GetProperty("id").GetString()!;
+            string checker = task.GetProperty("checker").GetString()!;
+            string userMessage = task.GetProperty("prompt").GetString()! + "\n\n" + formatLines[checker];
+
+            var timer = Stopwatch.StartNew();
+            using var content = new StringContent(ChatRequest(SystemPrompt, userMessage), Encoding.UTF8, "application/json");
+            using var response = await http.PostAsync($"{baseUrl}/v1/chat/completions", content);
+            string body = await response.Content.ReadAsStringAsync();
+            timer.Stop();
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException($"{id}: llama-server answered {(int)response.StatusCode}: {body}");
+            }
+
+            var root = JsonDocument.Parse(body).RootElement;
+            var choice = root.GetProperty("choices")[0];
+            var usage = root.GetProperty("usage");
+            double tokensPerSecond = root.TryGetProperty("timings", out var timings)
+                && timings.TryGetProperty("predicted_per_second", out var perSecond)
+                    ? perSecond.GetDouble()
+                    : 0;
+            var answer = new Answer(
+                choice.GetProperty("message").GetProperty("content").GetString() ?? "",
+                choice.GetProperty("finish_reason").GetString() ?? "",
+                usage.GetProperty("prompt_tokens").GetInt32(),
+                usage.GetProperty("completion_tokens").GetInt32(),
+                timer.Elapsed.TotalSeconds,
+                tokensPerSecond);
+            answers[id] = answer;
+            Console.WriteLine($"  {id.PadRight(idWidth)}  {answer.CompletionTokens,5} tokens  {answer.Seconds,6:0.0} s  {answer.FinishReason}");
+        }
+    }
+    catch (Exception e) when (e is InvalidOperationException or TimeoutException or HttpRequestException
+        or TaskCanceledException or JsonException or KeyNotFoundException)
+    {
+        Console.Error.WriteLine(e.Message);
+        return 1;
+    }
+    finally
+    {
+        // The server stops before the code checks start, so they don't share the machine with it.
+        Docker(["stop", serverName]);
+        server.WaitForExit();
+    }
+}
+var ended = DateTimeOffset.Now;
+
+string answersFile = Path.Combine(rawDirectory, $"{runId}-answers.jsonl");
+using (var writer = new StreamWriter(answersFile, append: false, new UTF8Encoding(false)))
+{
+    foreach (var (id, answer) in answers)
+    {
+        writer.Write(JsonLine(w =>
+        {
+            w.WriteString("id", id);
+            w.WriteString("reply", answer.Reply);
+            w.WriteString("finish_reason", answer.FinishReason);
+            w.WriteNumber("prompt_tokens", answer.PromptTokens);
+            w.WriteNumber("completion_tokens", answer.CompletionTokens);
+            w.WriteNumber("seconds", Math.Round(answer.Seconds, 3));
+        }));
+        writer.Write('\n');
+    }
 }
 
 Console.WriteLine();
-foreach (string category in categories.Where(c => results.Any(r => r.Category == c)))
+var results = ScoreAll(answers.ToDictionary(p => p.Key, p => p.Value.Reply));
+PrintScores(results);
+
+// One row per task, next to the answers.
+string tasksCsv = Path.Combine(rawDirectory, $"{runId}-tasks.csv");
+var taskRows = new List<string>
 {
-    var inCategory = results.Where(r => r.Category == category).ToList();
-    Console.WriteLine($"{category,-11} {Score(inCategory.Count(r => r.Right), inCategory.Count)}");
+    "id,category,checker,right,finish_reason,prompt_tokens,completion_tokens,seconds,tokens_per_s,detail",
+};
+foreach (var result in results)
+{
+    var answer = answers[result.Id];
+    taskRows.Add(string.Join(',',
+        result.Id, result.Category, result.Checker, result.Right ? "1" : "0", answer.FinishReason,
+        Text(answer.PromptTokens), Text(answer.CompletionTokens), Text(Math.Round(answer.Seconds, 3)),
+        Text(Math.Round(answer.TokensPerSecond, 2)), Csv(result.Detail)));
 }
-Console.WriteLine($"{"all",-11} {Score(results.Count(r => r.Right), results.Count)}");
+File.WriteAllLines(tasksCsv, taskRows);
+
+// One summary row per run. The header is written only when the file is new or empty.
+string Percent(string? category)
+{
+    var selected = results.Where(r => category is null || r.Category == category).ToList();
+    return selected.Count == 0
+        ? ""
+        : (100.0 * selected.Count(r => r.Right) / selected.Count).ToString("0.0", CultureInfo.InvariantCulture);
+}
+string[] summaryColumns =
+[
+    "run_id", "started_at", "ended_at", "model_file", "quant", "n_gpu_layers", "ctx", "flash_attn",
+    "cache_type_k", "cache_type_v", "n_cpu_moe", "threads", "tasks", "right", "score_pct",
+    "code_pct", "extraction_pct", "arithmetic_pct", "logic_pct", "cut_off", "completion_tokens", "generation_s",
+    "tasks_sha256_short", "image_digest_short",
+];
+string[] summary =
+[
+    runId, Iso(started), Iso(ended), modelFile!, modelRow["quant"], gpuLayers, ctx, flashAttn,
+    cacheTypeK, cacheTypeV, nCpuMoe, threads, Text(results.Count), Text(results.Count(r => r.Right)), Percent(null),
+    Percent("code"), Percent("extraction"), Percent("arithmetic"), Percent("logic"),
+    Text(answers.Values.Count(a => a.FinishReason == "length")),
+    Text(answers.Values.Sum(a => a.CompletionTokens)),
+    Text(Math.Round(answers.Values.Sum(a => a.Seconds), 1)),
+    Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(tasksPath)))[..8],
+    llamaImage[(llamaImage.IndexOf(':') + 1)..][..8],
+];
+bool newFile = !File.Exists(outPath) || new FileInfo(outPath).Length == 0;
+using (var writer = new StreamWriter(outPath, append: true))
+{
+    if (newFile)
+    {
+        writer.WriteLine(string.Join(',', summaryColumns));
+    }
+    writer.WriteLine(string.Join(',', summary));
+}
+
+Console.WriteLine();
+Console.WriteLine($"Answers:  {answersFile}");
+Console.WriteLine($"Per task: {tasksCsv}");
+Console.WriteLine($"Summary:  {outPath}");
 return 0;
+
+// ---- scoring ----
+
+// Scores every task and prints one line per task as it goes. A task with no reply is wrong.
+List<Result> ScoreAll(Dictionary<string, string> replies)
+{
+    int idWidth = tasks.Max(t => t.GetProperty("id").GetString()!.Length);
+    var results = new List<Result>();
+    foreach (var task in tasks)
+    {
+        string id = task.GetProperty("id").GetString()!;
+        string category = task.GetProperty("category").GetString()!;
+        string checker = task.GetProperty("checker").GetString()!;
+        var expected = task.GetProperty("expected");
+
+        bool right = false;
+        string detail = "no reply";
+        if (replies.TryGetValue(id, out string? rawReply))
+        {
+            string reply = StripThinking(rawReply);
+            (right, detail) = checker switch
+            {
+                "csharp-tests" => CheckCode(reply, Path.Combine(tasksDirectory, expected.GetString()!)),
+                "json" => CheckJson(reply, expected),
+                "number" => CheckNumber(reply, expected.GetDecimal()),
+                _ => CheckExact(reply, expected),
+            };
+        }
+
+        results.Add(new Result(id, category, checker, right, detail));
+        Console.WriteLine($"{id.PadRight(idWidth)}  {checker,-12}  {(right ? "right" : "wrong")}  {detail}");
+    }
+    return results;
+}
+
+void PrintScores(List<Result> results)
+{
+    Console.WriteLine();
+    foreach (string category in categories.Where(c => results.Any(r => r.Category == c)))
+    {
+        var inCategory = results.Where(r => r.Category == category).ToList();
+        Console.WriteLine($"{category,-11} {Score(inCategory.Count(r => r.Right), inCategory.Count)}");
+    }
+    Console.WriteLine($"{"all",-11} {Score(results.Count(r => r.Right), results.Count)}");
+}
 
 // ---- checkers ----
 
@@ -329,7 +641,7 @@ return 0;
                 "--read-only", "--tmpfs", "/tmp:exec,size=512m",
                 "-e", "HOME=/tmp", "-e", "DOTNET_CLI_TELEMETRY_OPTOUT=1", "-e", "DOTNET_NOLOGO=1",
                 "-v", $"{workDirectory}:/src:ro",
-                image!, "sh", "-c", script,
+                sdkImage!, "sh", "-c", script,
             ],
             SandboxTimeoutSeconds,
             containerName);
@@ -500,6 +812,75 @@ static string FirstLine(string output, string marker) =>
 static string Score(int right, int total) =>
     $"{right,3} of {total,3}  {(total == 0 ? 0 : 100.0 * right / total).ToString("0.0", CultureInfo.InvariantCulture),5} %";
 
+// The image is always started by digest. docker/images.md is the one place the digest is written down.
+// The tool never pulls, so it stops here if the pinned image isn't on this machine.
+static string? PinnedImage(string pattern, string name)
+{
+    string image = Regex.Match(File.ReadAllText("docker/images.md"), pattern).Value;
+    if (image.Length == 0)
+    {
+        Console.Error.WriteLine($"No {name} image digest found in docker/images.md.");
+        return null;
+    }
+    if (Docker(["image", "inspect", image]).ExitCode != 0)
+    {
+        Console.Error.WriteLine($"The image {image} isn't on this machine.");
+        return null;
+    }
+    return image;
+}
+
+// The body of one chat request, with the generation settings from tasks/README.md.
+static string ChatRequest(string system, string user) => JsonLine(w =>
+{
+    w.WriteStartArray("messages");
+    w.WriteStartObject();
+    w.WriteString("role", "system");
+    w.WriteString("content", system);
+    w.WriteEndObject();
+    w.WriteStartObject();
+    w.WriteString("role", "user");
+    w.WriteString("content", user);
+    w.WriteEndObject();
+    w.WriteEndArray();
+    w.WriteNumber("temperature", 0);
+    w.WriteNumber("max_tokens", MaxTokens);
+    w.WriteNumber("seed", Seed);
+});
+
+// One JSON object on one line. Non-ASCII text is written as it is, so the answers file stays readable.
+static string JsonLine(Action<Utf8JsonWriter> write)
+{
+    using var stream = new MemoryStream();
+    using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
+    {
+        writer.WriteStartObject();
+        write(writer);
+        writer.WriteEndObject();
+    }
+    return Encoding.UTF8.GetString(stream.ToArray());
+}
+
+static List<Dictionary<string, string>> ReadCsv(string path)
+{
+    // Plain CSV: no quoted fields and no commas inside values.
+    var lines = File.ReadAllLines(path).Where(line => line.Trim().Length > 0).ToList();
+    string[] header = lines[0].Split(',', StringSplitOptions.TrimEntries);
+    return lines
+        .Skip(1)
+        .Select(line => line.Split(',', StringSplitOptions.TrimEntries))
+        .Select(values => header.Select((column, i) => (column, value: i < values.Length ? values[i] : "")).ToDictionary(p => p.column, p => p.value))
+        .ToList();
+}
+
+// The detail column can hold commas and quotes, so it's quoted the CSV way when it needs to be.
+static string Csv(string value) =>
+    value.IndexOfAny([',', '"', '\n', '\r']) < 0 ? value : "\"" + value.Replace("\"", "\"\"") + "\"";
+
+static string Text(double value) => value.ToString(CultureInfo.InvariantCulture);
+
+static string Iso(DateTimeOffset time) => time.ToString("yyyy-MM-ddTHH:mm:sszzz", CultureInfo.InvariantCulture);
+
 // Runs docker and returns its exit code and output. With a timeout, the container is killed when the time is up,
 // and the exit code is -1.
 static (int ExitCode, string Output) Docker(string[] arguments, int timeoutSeconds = 0, string? containerName = null)
@@ -552,3 +933,9 @@ static (int ExitCode, string Output) Docker(string[] arguments, int timeoutSecon
         return (process.ExitCode, output.ToString());
     }
 }
+
+// One reply from the server, with what it cost.
+record Answer(string Reply, string FinishReason, int PromptTokens, int CompletionTokens, double Seconds, double TokensPerSecond);
+
+// One scored task.
+record Result(string Id, string Category, string Checker, bool Right, string Detail);
