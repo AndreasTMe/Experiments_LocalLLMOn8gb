@@ -1,0 +1,31 @@
+id,category,checker,right,finish_reason,prompt_tokens,completion_tokens,seconds,tokens_per_s,detail
+code-brackets,code,csharp-tests,0,stop,152,149,1.953,78.52,"build failed: /tmp/w/Solution.cs(23,27): error CS0117: 'char' does not contain a definition for 'IsBracket' [/tmp/w/task.csproj]"
+code-roman,code,csharp-tests,1,stop,143,207,2.704,78.09,
+code-intervals,code,csharp-tests,1,stop,214,186,2.467,77.55,
+code-top-words,code,csharp-tests,0,stop,180,274,3.569,78.24,"tests failed: TopWords(""it's a dog's life"", 3): expected [s,a,dog], got [a,dog's,it's]"
+code-duration,code,csharp-tests,0,stop,215,268,3.477,78.8,"tests failed: ParseDuration(""0s""): expected 0, got -1"
+code-spiral,code,csharp-tests,1,stop,209,325,4.175,79.42,
+code-rpn,code,csharp-tests,1,stop,173,166,2.169,79.4,
+code-edit-distance,code,csharp-tests,0,stop,139,246,3.15,79.51,"build failed: /tmp/w/Solution.cs(29,41): error CS1501: No overload for method 'Min' takes 3 arguments [/tmp/w/task.csproj]"
+code-versions,code,csharp-tests,1,stop,194,157,2.043,79.6,
+code-calculator,code,csharp-tests,0,stop,197,626,7.997,78.93,"build failed: /tmp/w/Solution.cs(31,33): error CS0266: Cannot implicitly convert type 'long' to 'int'. An explicit conversion exists (are you missing a cast?) [/tmp/w/task.csproj]"
+ext-meeting,extraction,json,1,stop,227,73,1.032,78.79,
+ext-shipping,extraction,json,1,stop,227,87,1.164,79.4,
+ext-signature,extraction,json,0,stop,196,70,0.956,78.74,"mobile: expected ""+491715550199"", got ""+49 171 555 0199"""
+ext-logs,extraction,json,0,stop,343,62,0.883,78.21,"services_with_errors: expected 3 items, got 4"
+ext-recipe,extraction,json,0,stop,242,39,0.573,78.62,"total_time_minutes: expected 95, got 75"
+ext-statement,extraction,json,0,stop,292,87,1.183,78.99,"iban: expected ""GB33BUKB20201555555555"", got ""GB33BUKB2020155555555555"""
+ext-lamp,extraction,json,1,stop,195,73,0.985,79.72,
+ext-job,extraction,json,0,stop,222,89,1.186,79.16,"title: expected ""Backend Developer"", got ""Backend Developer (C#/.NET)"""
+math-train,arithmetic,number,1,stop,94,125,1.605,80.08,
+math-price,arithmetic,number,1,stop,102,121,1.547,80.21,
+math-interest,arithmetic,number,1,stop,100,276,3.501,79.83,
+math-tank,arithmetic,number,1,stop,117,260,3.324,79.48,
+math-multiples,arithmetic,number,1,stop,95,789,10.028,79.07,
+math-fuel,arithmetic,number,0,stop,117,196,2.544,79.83,got 81.13
+logic-weekday,logic,exact,1,stop,66,30,0.417,79.89,
+logic-knights,logic,exact,0,stop,124,401,5.074,79.57,"got A, B, C"
+logic-race,logic,exact,1,stop,106,460,5.875,79.14,
+logic-sevens,logic,number,1,stop,86,285,3.64,79.69,
+logic-club,logic,exact,1,stop,79,297,3.774,79.68,
+logic-houses,logic,exact,0,length,204,1024,13.151,78.27,no Answer: line

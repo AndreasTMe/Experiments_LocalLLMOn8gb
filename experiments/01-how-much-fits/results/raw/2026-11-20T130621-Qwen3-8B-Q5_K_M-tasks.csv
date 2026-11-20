@@ -1,0 +1,31 @@
+id,category,checker,right,finish_reason,prompt_tokens,completion_tokens,seconds,tokens_per_s,detail
+code-brackets,code,csharp-tests,1,stop,152,165,2.591,65.69,
+code-roman,code,csharp-tests,1,stop,143,229,3.58,65.37,
+code-intervals,code,csharp-tests,1,stop,214,280,4.477,64.03,
+code-top-words,code,csharp-tests,0,stop,180,203,3.232,64.76,"tests failed: TopWords(""it's a dog's life"", 3): expected [s,a,dog], got [a,dog's,it's]"
+code-duration,code,csharp-tests,0,stop,215,316,5.009,64.43,"tests failed: ParseDuration(""1h30m15s""): expected 5415, got -1"
+code-spiral,code,csharp-tests,1,stop,209,327,5.184,64.46,
+code-rpn,code,csharp-tests,1,stop,173,172,2.751,64.99,
+code-edit-distance,code,csharp-tests,1,stop,139,251,3.991,64.29,
+code-versions,code,csharp-tests,1,stop,194,160,2.579,64.67,
+code-calculator,code,csharp-tests,0,stop,197,529,8.315,64.4,tests failed: Unhandled exception. System.ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
+ext-meeting,extraction,json,1,stop,227,77,1.325,64.57,
+ext-shipping,extraction,json,1,stop,227,91,1.537,63.79,
+ext-signature,extraction,json,1,stop,196,71,1.196,65.36,
+ext-logs,extraction,json,0,stop,343,63,1.139,64.04,"errors: expected 4, got 3"
+ext-recipe,extraction,json,0,stop,242,43,0.783,64.24,"total_time_minutes: expected 95, got 75"
+ext-statement,extraction,json,0,stop,292,86,1.48,64.15,"iban: expected ""GB33BUKB20201555555555"", got ""GB33BUKB202015555555"""
+ext-lamp,extraction,json,1,stop,195,77,1.295,64.64,
+ext-job,extraction,json,0,stop,222,93,1.541,64.53,"title: expected ""Backend Developer"", got ""Backend Developer (C#/.NET)"""
+math-train,arithmetic,number,1,stop,94,164,2.584,64.82,
+math-price,arithmetic,number,1,stop,102,141,2.228,65.12,
+math-interest,arithmetic,number,1,stop,100,376,5.846,65.05,
+math-tank,arithmetic,number,1,stop,117,432,6.795,64.28,
+math-multiples,arithmetic,number,0,stop,95,760,11.834,64.61,got 200823
+math-fuel,arithmetic,number,0,stop,117,238,3.742,65.28,got 81.13
+logic-weekday,logic,exact,1,stop,66,83,1.317,65.65,
+logic-knights,logic,exact,1,stop,124,635,9.947,64.19,
+logic-race,logic,exact,1,stop,106,483,7.577,64.47,
+logic-sevens,logic,number,1,stop,86,568,8.915,64.27,
+logic-club,logic,exact,1,stop,79,282,4.44,64.53,
+logic-houses,logic,exact,0,length,204,1024,16.225,63.54,no Answer: line

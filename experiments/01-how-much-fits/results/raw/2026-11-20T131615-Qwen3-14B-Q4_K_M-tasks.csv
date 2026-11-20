@@ -1,0 +1,31 @@
+id,category,checker,right,finish_reason,prompt_tokens,completion_tokens,seconds,tokens_per_s,detail
+code-brackets,code,csharp-tests,1,stop,152,151,9.11,17.19,
+code-roman,code,csharp-tests,1,stop,143,247,15.05,16.8,
+code-intervals,code,csharp-tests,1,stop,214,255,15.803,16.61,
+code-top-words,code,csharp-tests,0,stop,180,354,22.635,15.93,"tests failed: TopWords(""café latte"", 5): expected [caf,latte], got [café,latte]"
+code-duration,code,csharp-tests,0,stop,215,259,16.371,16.25,"tests failed: ParseDuration(""1m1h""): expected -1, got 3660"
+code-spiral,code,csharp-tests,1,stop,209,320,20.457,15.98,
+code-rpn,code,csharp-tests,1,stop,173,199,12.104,17.09,
+code-edit-distance,code,csharp-tests,1,stop,139,246,14.792,17,
+code-versions,code,csharp-tests,1,stop,194,168,10.135,17.29,
+code-calculator,code,csharp-tests,0,stop,197,550,35.669,15.59,tests failed: Stack overflow.
+ext-meeting,extraction,json,1,stop,227,77,4.861,17.63,
+ext-shipping,extraction,json,1,stop,227,91,5.599,17.55,
+ext-signature,extraction,json,1,stop,196,67,4.146,17.8,
+ext-logs,extraction,json,1,stop,343,63,4.089,17.44,
+ext-recipe,extraction,json,0,stop,242,39,2.654,17.62,"total_time_minutes: expected 95, got 80"
+ext-statement,extraction,json,0,stop,292,85,5.29,17.53,"iban: expected ""GB33BUKB20201555555555"", got ""GB33BUKB202015555555555"""
+ext-lamp,extraction,json,1,stop,195,77,4.726,17.78,
+ext-job,extraction,json,1,stop,222,84,5.129,17.66,
+math-train,arithmetic,number,1,stop,94,142,8.432,17.46,
+math-price,arithmetic,number,1,stop,102,122,7.366,17.26,
+math-interest,arithmetic,number,1,stop,100,251,15.239,16.78,
+math-tank,arithmetic,number,1,stop,117,268,16.36,16.76,
+math-multiples,arithmetic,number,1,stop,95,697,45.534,15.41,
+math-fuel,arithmetic,number,0,stop,117,257,15.738,16.77,got 81.13
+logic-weekday,logic,exact,1,stop,66,39,2.48,17.74,
+logic-knights,logic,exact,1,stop,124,409,24.647,16.78,
+logic-race,logic,exact,1,stop,106,458,28.748,16.13,
+logic-sevens,logic,number,1,stop,86,241,14.756,16.77,
+logic-club,logic,exact,1,stop,79,196,11.798,17.1,
+logic-houses,logic,exact,1,stop,204,991,66.99,14.88,

@@ -1,0 +1,6 @@
+id,category,checker,right,finish_reason,prompt_tokens,completion_tokens,seconds,tokens_per_s,detail
+fact-a,extraction,number,1,stop,31332,85,21.659,32.99,
+fact-b,extraction,exact,1,stop,31316,38,20.309,33.05,
+fact-c,extraction,exact,1,stop,31313,27,19.901,33.05,
+fact-d,extraction,exact,1,stop,31318,52,20.648,33.05,
+control,extraction,number,1,stop,31332,37,20.212,33.14,

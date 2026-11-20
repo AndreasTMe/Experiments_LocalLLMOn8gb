@@ -212,6 +212,33 @@ The summary row has the configuration (`model_file`, `quant`, `n_gpu_layers`, `c
 
 On Qwen3-4B Q4_K_M with every layer on the GPU, a run takes about 70 seconds for the replies plus about 25 seconds for the code checks. Two runs gave the same reply for every task, byte for byte.
 
+## long-context.cs
+
+Builds a long-context tasks file for `tasks.cs`: a long text with made-up facts planted in it, and one task per fact that asks about it. The facts and questions are in `tasks/long-context/`.
+
+```
+dotnet run tools/long-context.cs -- --ctx <tokens> --out <tasks.jsonl>
+    [--model Qwen3-8B-Q4_K_M.gguf] [--facts tasks/long-context/facts.jsonl]
+    [--source staging/wikitext-2-raw/wiki.test.raw]
+```
+
+The text is the start of the source, cut at a line break so that the text, facts included, is at most `ctx - 1024 - 256` tokens: 1024 for the reply, and 256 for the system prompt, the chat template, the question and the reply format line. Tokens are counted with `llama-tokenize` in the pinned llama.cpp image, on the CPU, with the model's own tokenizer. The tool starts from 4 characters per token and recounts until the text is within 300 tokens under the limit, which takes two or three counts.
+
+Blank lines in the source are dropped. Each fact goes in as its own line, before the line at the fact's `position`, a share of the text's length in characters. So a fact lands at the paragraph break nearest to its position.
+
+Every task gets the same prompt, then its own question:
+
+```
+Read the text below, then answer the question after it. The answer is stated in the text.
+
+Text:
+<text>
+
+Question: <question>
+```
+
+The category is `extraction` and the checker the fact's own. The output holds the source text, so it goes in `staging/`, which isn't committed.
+
 ## Benchmark results
 
 Each experiment keeps its benchmark results in `experiments/<experiment>/results/`:
