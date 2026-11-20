@@ -1,0 +1,7 @@
+run_id,started_at,ended_at,model_file,quant,n_gpu_layers,ctx,flash_attn,cache_type_k,cache_type_v,n_cpu_moe,threads,tasks,right,score_pct,code_pct,extraction_pct,arithmetic_pct,logic_pct,cut_off,completion_tokens,generation_s,tasks_sha256_short,image_digest_short
+2026-11-20T175419-Qwen3-8B-Q4_K_M,2026-11-20T17:54:19+00:00,2026-11-20T17:55:04+00:00,Qwen3-8B-Q4_K_M.gguf,Q4_K_M,99,16384,on,f16,f16,0,10,5,5,100.0,,100.0,,,0,232,39.9,20db2e3b,03d61e75
+2026-11-20T175504-Qwen3-8B-Q4_K_M,2026-11-20T17:55:04+00:00,2026-11-20T17:55:48+00:00,Qwen3-8B-Q4_K_M.gguf,Q4_K_M,99,16384,on,q8_0,q8_0,0,10,5,5,100.0,,100.0,,,0,267,42,20db2e3b,03d61e75
+2026-11-20T175548-Qwen3-8B-Q4_K_M,2026-11-20T17:55:48+00:00,2026-11-20T17:56:32+00:00,Qwen3-8B-Q4_K_M.gguf,Q4_K_M,99,16384,on,q4_0,q4_0,0,10,5,5,100.0,,100.0,,,0,259,41.7,20db2e3b,03d61e75
+2026-11-20T175632-Qwen3-8B-Q4_K_M,2026-11-20T17:56:32+00:00,2026-11-20T17:58:17+00:00,Qwen3-8B-Q4_K_M.gguf,Q4_K_M,99,32768,on,q8_0,q8_0,0,10,5,5,100.0,,100.0,,,0,239,102.7,cc013105,03d61e75
+2026-11-20T175817-Qwen3-8B-Q4_K_M,2026-11-20T17:58:17+00:00,2026-11-20T18:00:01+00:00,Qwen3-8B-Q4_K_M.gguf,Q4_K_M,99,32768,on,q4_0,q4_0,0,10,5,5,100.0,,100.0,,,0,227,102.2,cc013105,03d61e75
+2026-11-20T180001-Qwen3-8B-Q4_K_M,2026-11-20T18:00:01+00:00,2026-11-20T18:02:20+00:00,Qwen3-8B-Q4_K_M.gguf,Q4_K_M,99,39936,on,q4_0,q4_0,0,10,5,5,100.0,,100.0,,,0,235,136.1,5afbd1e2,03d61e75

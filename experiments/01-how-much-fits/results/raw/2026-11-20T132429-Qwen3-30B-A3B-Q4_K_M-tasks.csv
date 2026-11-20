@@ -1,0 +1,31 @@
+id,category,checker,right,finish_reason,prompt_tokens,completion_tokens,seconds,tokens_per_s,detail
+code-brackets,code,csharp-tests,0,stop,152,164,7.021,32.54,"tests failed: IsBalanced(""((""): expected False, got True"
+code-roman,code,csharp-tests,1,stop,143,284,10.286,31.25,
+code-intervals,code,csharp-tests,1,stop,214,206,7.715,32.18,
+code-top-words,code,csharp-tests,0,stop,180,245,8.983,31.66,"tests failed: TopWords(""café latte"", 5): expected [caf,latte], got [café,latte]"
+code-duration,code,csharp-tests,0,stop,215,286,10.503,31.02,"tests failed: ParseDuration(""45s""): expected 45, got -1"
+code-spiral,code,csharp-tests,1,stop,209,312,11.406,30.92,
+code-rpn,code,csharp-tests,1,stop,173,169,6.432,32.71,
+code-edit-distance,code,csharp-tests,1,stop,139,251,9.148,31.66,
+code-versions,code,csharp-tests,1,stop,194,158,6.061,33.05,
+code-calculator,code,csharp-tests,0,stop,197,423,15.381,29.95,"tests failed: Evaluate("" 7 / 2 ""): expected 3, got 7"
+ext-meeting,extraction,json,1,stop,227,77,3.586,34.27,
+ext-shipping,extraction,json,1,stop,227,91,3.909,34.8,
+ext-signature,extraction,json,1,stop,196,71,3.272,35.03,
+ext-logs,extraction,json,1,stop,343,63,3.051,35.24,
+ext-recipe,extraction,json,0,stop,242,43,2.477,34.75,"total_time_minutes: expected 95, got 85"
+ext-statement,extraction,json,0,stop,292,88,3.781,34.69,"transactions: expected 5, got 6"
+ext-lamp,extraction,json,1,stop,195,77,3.472,34.76,
+ext-job,extraction,json,1,stop,222,88,3.792,34.29,
+math-train,arithmetic,number,1,stop,94,233,8.415,31.83,
+math-price,arithmetic,number,1,stop,102,110,4.366,34.18,
+math-interest,arithmetic,number,1,stop,100,316,11.316,30.94,
+math-tank,arithmetic,number,1,stop,117,369,13.465,30.11,
+math-multiples,arithmetic,number,1,stop,95,619,22.702,28.76,
+math-fuel,arithmetic,number,1,stop,117,174,6.57,32.52,
+logic-weekday,logic,exact,1,stop,66,35,2.039,34.55,
+logic-knights,logic,exact,1,stop,124,501,18.133,29.42,
+logic-race,logic,exact,0,stop,106,474,17.275,29.43,no Answer: line
+logic-sevens,logic,number,0,stop,86,241,8.743,31.73,no Answer: line
+logic-club,logic,exact,1,stop,79,266,9.545,31.39,
+logic-houses,logic,exact,0,stop,204,931,34.13,28.29,no Answer: line

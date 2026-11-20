@@ -1,0 +1,31 @@
+id,category,checker,right,finish_reason,prompt_tokens,completion_tokens,seconds,tokens_per_s,detail
+code-brackets,code,csharp-tests,1,stop,152,161,2.311,72.35,
+code-roman,code,csharp-tests,1,stop,143,193,2.732,72.43,
+code-intervals,code,csharp-tests,1,stop,214,256,3.641,72.1,
+code-top-words,code,csharp-tests,0,stop,180,220,3.123,72.3,"tests failed: TopWords(""Dog dog DOG cat"", 5): expected [dog,cat], got [dog,cat,,,]"
+code-duration,code,csharp-tests,0,stop,215,324,4.589,72.04,"tests failed: ParseDuration(""1h30m15s""): expected 5415, got -1"
+code-spiral,code,csharp-tests,1,stop,209,275,3.908,72.1,
+code-rpn,code,csharp-tests,1,stop,173,172,2.466,72.21,
+code-edit-distance,code,csharp-tests,1,stop,139,251,3.538,72.32,
+code-versions,code,csharp-tests,1,stop,194,160,2.322,71.65,
+code-calculator,code,csharp-tests,0,stop,197,844,12.009,70.81,"build failed: /tmp/w/Solution.cs(25,42): error CS0136: A local or parameter named 's' cannot be declared in this scope because that name is used in an enclosing local scope to define a local or parameter [/tmp/w/task.csproj]"
+ext-meeting,extraction,json,1,stop,227,77,1.189,71.67,
+ext-shipping,extraction,json,1,stop,227,91,1.37,71.65,
+ext-signature,extraction,json,1,stop,196,71,1.07,72.19,
+ext-logs,extraction,json,0,stop,343,63,1.024,71.46,"errors: expected 4, got 3"
+ext-recipe,extraction,json,0,stop,242,44,0.717,71.5,"total_time_minutes: expected 95, got 135"
+ext-statement,extraction,json,1,stop,292,88,1.349,71.91,
+ext-lamp,extraction,json,1,stop,195,73,1.101,72.16,
+ext-job,extraction,json,0,stop,222,93,1.384,71.78,"title: expected ""Backend Developer"", got ""Backend Developer (C#/.NET)"""
+math-train,arithmetic,number,1,stop,94,207,2.909,72.39,
+math-price,arithmetic,number,1,stop,102,206,2.908,72.1,
+math-interest,arithmetic,number,1,stop,100,346,4.854,72.05,
+math-tank,arithmetic,number,1,stop,117,444,6.23,71.94,
+math-multiples,arithmetic,number,1,stop,95,754,10.612,71.4,
+math-fuel,arithmetic,number,0,stop,117,244,3.444,72.23,got 81.21
+logic-weekday,logic,exact,1,stop,66,71,1.02,72.43,
+logic-knights,logic,exact,1,stop,124,744,10.512,71.13,
+logic-race,logic,exact,1,stop,106,515,7.24,71.76,
+logic-sevens,logic,number,1,stop,86,446,6.253,71.9,
+logic-club,logic,exact,1,stop,79,274,3.844,72.16,
+logic-houses,logic,exact,0,length,204,1024,14.618,70.48,no Answer: line

@@ -1,0 +1,31 @@
+id,category,checker,right,finish_reason,prompt_tokens,completion_tokens,seconds,tokens_per_s,detail
+code-brackets,code,csharp-tests,0,stop,152,149,1.633,94.18,"build failed: /tmp/w/Solution.cs(23,27): error CS0117: 'char' does not contain a definition for 'IsBracket' [/tmp/w/task.csproj]"
+code-roman,code,csharp-tests,1,stop,143,200,2.203,93.42,
+code-intervals,code,csharp-tests,1,stop,214,186,2.071,93.41,
+code-top-words,code,csharp-tests,0,stop,180,295,3.221,93.76,"build failed: /tmp/w/Solution.cs(8,32): error CS0826: No best type found for implicitly-typed array [/tmp/w/task.csproj]"
+code-duration,code,csharp-tests,0,stop,215,376,4.15,92.49,"tests failed: ParseDuration(""1h30m15s""): expected 5415, got -1"
+code-spiral,code,csharp-tests,1,stop,209,325,3.757,88.89,
+code-rpn,code,csharp-tests,1,stop,173,166,1.896,91.57,
+code-edit-distance,code,csharp-tests,0,stop,139,246,2.69,93.65,"build failed: /tmp/w/Solution.cs(29,41): error CS1501: No overload for method 'Min' takes 3 arguments [/tmp/w/task.csproj]"
+code-versions,code,csharp-tests,1,stop,194,156,1.747,93.5,
+code-calculator,code,csharp-tests,0,stop,197,461,5.035,93.01,"build failed: /tmp/w/Solution.cs(71,37): error CS0266: Cannot implicitly convert type 'long' to 'int'. An explicit conversion exists (are you missing a cast?) [/tmp/w/task.csproj]"
+ext-meeting,extraction,json,1,stop,227,73,0.899,92.98,
+ext-shipping,extraction,json,1,stop,227,87,1.01,93.26,
+ext-signature,extraction,json,0,stop,196,70,0.835,92.12,"mobile: expected ""+491715550199"", got ""+49 171 555 0199"""
+ext-logs,extraction,json,0,stop,343,62,0.772,92.75,"services_with_errors: expected 3 items, got 4"
+ext-recipe,extraction,json,0,stop,242,39,0.506,92.69,"total_time_minutes: expected 95, got 75"
+ext-statement,extraction,json,0,stop,292,87,1.033,93.21,"iban: expected ""GB33BUKB20201555555555"", got ""GB33BUKB2020155555555555"""
+ext-lamp,extraction,json,1,stop,195,73,0.883,91.74,
+ext-job,extraction,json,0,stop,222,89,1.029,93.19,"title: expected ""Backend Developer"", got ""Backend Developer (C#/.NET)"""
+math-train,arithmetic,number,1,stop,94,168,1.851,93.28,
+math-price,arithmetic,number,1,stop,102,121,1.354,92.57,
+math-interest,arithmetic,number,1,stop,100,276,3.007,93.36,
+math-tank,arithmetic,number,1,stop,117,212,2.374,91.63,
+math-multiples,arithmetic,number,0,stop,95,584,6.396,92.03,got 200868
+math-fuel,arithmetic,number,0,stop,117,190,2.183,90.31,got 81.25
+logic-weekday,logic,exact,1,stop,66,34,0.448,84.86,
+logic-knights,logic,exact,0,stop,124,408,4.47,92.1,"got A, B, C"
+logic-race,logic,exact,1,stop,106,343,3.828,91.2,
+logic-sevens,logic,number,1,stop,86,258,2.837,92.89,
+logic-club,logic,exact,1,stop,79,295,3.185,94.06,
+logic-houses,logic,exact,0,stop,204,946,10.289,92.64,got Di

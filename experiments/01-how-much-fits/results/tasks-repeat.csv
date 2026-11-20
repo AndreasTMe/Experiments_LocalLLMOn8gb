@@ -1,0 +1,3 @@
+run_id,started_at,ended_at,model_file,quant,n_gpu_layers,ctx,flash_attn,cache_type_k,cache_type_v,n_cpu_moe,threads,tasks,right,score_pct,code_pct,extraction_pct,arithmetic_pct,logic_pct,cut_off,completion_tokens,generation_s,tasks_sha256_short,image_digest_short
+2026-11-20T115358-Qwen3-4B-Q4_K_M,2026-11-20T11:53:58+00:00,2026-11-20T11:55:06+00:00,Qwen3-4B-Q4_K_M.gguf,Q4_K_M,99,4096,on,f16,f16,0,10,30,16,53.3,60.0,37.5,66.7,50.0,1,6920,64.5,5ab4e79d,03d61e75
+2026-11-20T115534-Qwen3-4B-Q4_K_M,2026-11-20T11:55:34+00:00,2026-11-20T11:56:41+00:00,Qwen3-4B-Q4_K_M.gguf,Q4_K_M,99,4096,on,f16,f16,0,10,30,16,53.3,60.0,37.5,66.7,50.0,1,6920,64.6,5ab4e79d,03d61e75

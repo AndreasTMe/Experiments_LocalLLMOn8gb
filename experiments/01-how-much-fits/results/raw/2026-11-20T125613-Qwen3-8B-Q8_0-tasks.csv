@@ -1,0 +1,31 @@
+id,category,checker,right,finish_reason,prompt_tokens,completion_tokens,seconds,tokens_per_s,detail
+code-brackets,code,csharp-tests,1,stop,152,162,7.861,21.26,
+code-roman,code,csharp-tests,1,stop,143,232,11.118,21.31,
+code-intervals,code,csharp-tests,1,stop,214,266,12.785,21.24,
+code-top-words,code,csharp-tests,0,stop,180,203,9.82,21.28,"tests failed: TopWords(""it's a dog's life"", 3): expected [s,a,dog], got [a,dog's,it's]"
+code-duration,code,csharp-tests,0,stop,215,316,15.116,21.24,"tests failed: ParseDuration(""1h30m15s""): expected 5415, got -1"
+code-spiral,code,csharp-tests,1,stop,209,305,14.664,21.2,
+code-rpn,code,csharp-tests,1,stop,173,169,8.193,21.32,
+code-edit-distance,code,csharp-tests,1,stop,139,251,12.042,21.27,
+code-versions,code,csharp-tests,1,stop,194,160,7.77,21.31,
+code-calculator,code,csharp-tests,0,stop,197,608,29.337,20.91,"tests failed: Evaluate(""1+2""): expected 3, got 0"
+ext-meeting,extraction,json,1,stop,227,77,3.943,21.17,
+ext-shipping,extraction,json,1,stop,227,91,4.526,21.23,
+ext-signature,extraction,json,1,stop,196,71,3.582,21.39,
+ext-logs,extraction,json,1,stop,343,63,3.293,20.98,
+ext-recipe,extraction,json,0,stop,242,43,2.331,20.82,"total_time_minutes: expected 95, got 75"
+ext-statement,extraction,json,0,stop,292,86,4.343,21.19,"iban: expected ""GB33BUKB20201555555555"", got ""GB33BUKB202015555555"""
+ext-lamp,extraction,json,1,stop,195,77,3.883,21.35,
+ext-job,extraction,json,0,stop,222,93,4.613,21.22,"title: expected ""Backend Developer"", got ""Backend Developer (C#/.NET)"""
+math-train,arithmetic,number,1,stop,94,177,8.439,21.53,
+math-price,arithmetic,number,1,stop,102,139,6.671,21.44,
+math-interest,arithmetic,number,1,stop,100,339,16.063,21.38,
+math-tank,arithmetic,number,1,stop,117,413,19.646,21.29,
+math-multiples,arithmetic,number,0,stop,95,748,35.747,21.06,got 200823
+math-fuel,arithmetic,number,0,stop,117,239,11.509,21.34,got 81.21
+logic-weekday,logic,exact,1,stop,66,83,4.075,21.52,
+logic-knights,logic,exact,1,stop,124,565,26.902,21.15,
+logic-race,logic,exact,1,stop,106,477,22.686,21.28,
+logic-sevens,logic,number,1,stop,86,637,30.302,21.2,
+logic-club,logic,exact,1,stop,79,273,13.033,21.4,
+logic-houses,logic,exact,1,stop,204,1015,49.491,20.62,
