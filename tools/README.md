@@ -38,10 +38,12 @@ Runs until Ctrl+C, or for `--duration-s` seconds. Every row is flushed as it's w
 Runs a sweep of `llama-bench` configurations in the pinned llama.cpp image and appends one row per test to a results CSV, in the columns below.
 
 ```
-dotnet run tools/bench.cs -- --sweep <sweep.csv> --experiment <name> [--out <results.csv>] [--cool-to-c 45] [--cool-timeout-s 900]
+dotnet run tools/bench.cs -- --sweep <sweep.csv> --experiment <name> [--out <results.csv>] [--cool-to-c 45] [--cool-timeout-s 900] [--native <dir>] [--models-dir staging/models]
 ```
 
 `--out` defaults to `experiments/<experiment>/results/bench.csv`. The raw files go into `raw/` next to it.
+
+`--native <dir>` runs `llama-bench.exe` from that folder on the host instead of the image, with the models from `--models-dir` (`staging/models` by default). Its flags were checked against `docker/help/b12030-win-cuda-12.4/llama-bench.txt`, and they match the image's except for one extra, `-rpc`, and the default thread count, which the runner always sets anyway. `image_digest` is `native` in its rows.
 
 The sweep file has one configuration per line, one value per column:
 
@@ -238,6 +240,64 @@ Question: <question>
 ```
 
 The category is `extraction` and the checker the fact's own. The output holds the source text, so it goes in `staging/`, which isn't committed.
+
+## ollama.cs
+
+Measures what Ollama picks on its own, and how fast it generates, for models already imported into the `ollama-data` volume.
+
+```
+dotnet run tools/ollama.cs -- --experiment <name> --models <name,name,...> [--out <ollama.csv>]
+    [--repetitions 5] [--num-predict 128] [--port 11435] [--cool-to-c 45] [--cool-timeout-s 900]
+```
+
+`--out` defaults to `experiments/<experiment>/results/ollama.csv`. The raw files go into `raw/` next to it.
+
+The models are imported once, from the same GGUF files as everywhere else, with a Modelfile that has only a `FROM` line:
+
+```
+FROM /models/Qwen3-8B-Q4_K_M.gguf
+```
+
+and `ollama create qwen3-8b-q4km -f <Modelfile>` inside the container. Ollama copies the file into `ollama-data` as a blob named after its SHA-256, so the blob says which file it is.
+
+The runner:
+
+1. Starts the pinned Ollama image by digest from `docker/images.md`, as `ollama-run`, with `--gpus all`, `ollama-data` at `/root/.ollama`, the models volume read-only, the port on `127.0.0.1` only, and `OLLAMA_NO_CLOUD=1`.
+2. For each model, waits until the GPU is at `--cool-to-c` or cooler, as `bench.cs` does.
+3. Loads the model with a 16-token request, then reads `/api/ps` and the VRAM in use from `nvidia-smi`.
+4. Sends the same prompt, "Write a long story about a lighthouse keeper.", `--repetitions` times, with only `num_predict` set. The speed of each request is `eval_count / eval_duration`, Ollama's own count and timing of the generated tokens.
+5. Unloads the model with `keep_alive: 0`, so the next one starts from an empty GPU.
+6. Saves the llama-server log of that load as `raw/<run_id>.log` and the replies, without their `context` field, as `raw/<run_id>.jsonl`. Reads the rest of the row from that log.
+
+The columns:
+
+| Column                   | From                                                                                           |
+| ------------------------ | ---------------------------------------------------------------------------------------------- |
+| `run_id`                 | the start time of the run, `ollama` and the model name                                         |
+| `started_at`             | when the model was loaded, with the offset                                                     |
+| `experiment`             | `--experiment`                                                                                 |
+| `image_digest`           | `docker/images.md`                                                                             |
+| `ollama_version`         | `/api/version`                                                                                 |
+| `llama_commit`           | the `build` line of the log: the llama.cpp commit Ollama ships                                 |
+| `ollama_model`           | the name in Ollama                                                                             |
+| `model_file`             | the blob's SHA-256, looked up in `models/models.csv`                                           |
+| `context_length`         | `/api/ps`                                                                                      |
+| `gpu_layers`             | `offloaded X/Y layers to GPU` in the log; Y counts the output layer                            |
+| `flash_attn`             | `on` if the log says `Flash Attention enabled`, otherwise the `--flash-attn` value             |
+| `cache_type_k`, `_v`     | `-ctk` and `-ctv` in the command, `f16` if they aren't there                                   |
+| `threads`                | `n_threads` in the log                                                                         |
+| `batch`                  | `-b` in the command                                                                            |
+| `ollama_size_bytes`      | `size` in `/api/ps`                                                                            |
+| `ollama_size_vram_bytes` | `size_vram` in `/api/ps`                                                                       |
+| `vram_used_mib`          | `nvidia-smi` after loading, for the whole GPU                                                  |
+| `prompt_tokens`          | mean `prompt_eval_count`, the prompt after the chat template                                   |
+| `gen_tokens`             | mean `eval_count`                                                                              |
+| `repetitions`            | `--repetitions`                                                                                |
+| `tokens_per_s_mean`      | mean speed of the timed requests                                                               |
+| `tokens_per_s_stddev`    | their sample standard deviation                                                                |
+| `notes`                  | `-ngl` or `--n-cpu-moe` if Ollama passed them, and how many layers' experts fit put on the CPU |
+
+Ollama 0.40.16 passes neither `-ngl` nor `--n-cpu-moe`. It leaves the split to llama-server's fit step, which can keep every layer of a MoE model on the GPU and move the expert tensors of some of them to the CPU. Then `gpu_layers` says all layers are on the GPU, and `notes` says how many have their experts on the CPU.
 
 ## Benchmark results
 

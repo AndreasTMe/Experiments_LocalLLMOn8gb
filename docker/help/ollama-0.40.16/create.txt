@@ -1,0 +1,15 @@
+Create a model
+
+Usage:
+  ollama create MODEL [flags]
+
+Flags:
+      --combine strings         Create a manifest list from comma-separated local models
+      --draft-quantize string   Quantize safetensors draft model to this level
+  -f, --file string             Name of the Modelfile (default "Modelfile")
+      --force                   Continue local creation when MLX validation fails
+  -h, --help                    help for create
+  -q, --quantize string         Quantize safetensors model to this level (e.g. nvfp4)
+
+Environment Variables:
+      OLLAMA_HOST                   IP Address for the ollama server (default 127.0.0.1:11434)

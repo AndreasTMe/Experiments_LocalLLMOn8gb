@@ -40,6 +40,46 @@ Available devices:
 
 `ggml_cuda_init` reports compute capability 8.6. `nvidia-smi` also works inside the container. VRAM is still measured with `nvidia-smi` on Windows.
 
+## Native Windows build
+
+Not an image: the same llama.cpp build as the image, as Windows binaries, to compare against Docker. Both zips are from the b12030 release on GitHub (`ggml-org/llama.cpp`), unpacked into one folder, `staging/llama-b12030-win/bin/`, which isn't in the repo.
+
+| Field     | Value                                                                                                     |
+| --------- | --------------------------------------------------------------------------------------------------------- |
+| Binaries  | `llama-b12030-bin-win-cuda-12.4-x64.zip`, 279,952,590 bytes                                               |
+| SHA-256   | `c1ff9b27ff160a706b5a17d58804ef94e699687147dbc2cb3b8395e4b8d4e136`                                        |
+| CUDA DLLs | `cudart-llama-bin-win-cuda-12.4-x64.zip`, 391,443,627 bytes                                               |
+| SHA-256   | `8c79a9b226de4b3cacfd1f83d24f962d0773be79f1e7b75c6af4ded7e32ae1d6`                                        |
+| Build     | 12030                                                                                                     |
+| Version   | 0.8.0-dev                                                                                                 |
+| Commit    | `a91eab67d` (from `--version`), the same as the image                                                     |
+| Compiler  | Clang 20.1.8                                                                                              |
+| CUDA      | 12.4, against 12.8.1 in the image                                                                         |
+| CPU code  | `ggml-cpu-haswell.dll`, picked at start-up                                                                |
+
+`llama-bench.exe --help` is in `help/b12030-win-cuda-12.4/`.
+
+## Ollama
+
+Compared against llama.cpp with its own defaults, on the same GGUF files.
+
+| Field          | Value                                                                     |
+| -------------- | ------------------------------------------------------------------------- |
+| Image          | `ollama/ollama`                                                           |
+| Tag            | `0.40.16`                                                                 |
+| Digest         | `sha256:910d0d8107b538fb0894e63163eb195de0cc7aefcbc666dc62d3b18f71124592` |
+| Local image ID | `sha256:6c437ef9d364e1712bc7e2342b224369e3669c29d9373f1bbdd68f4601d58fd9` |
+| Size           | 5.1 GB on disk                                                            |
+| Version        | 0.40.16                                                                   |
+| OS             | Ubuntu 24.04                                                              |
+| Pulled         | 2026-11-20                                                                |
+
+```
+ollama/ollama@sha256:910d0d8107b538fb0894e63163eb195de0cc7aefcbc666dc62d3b18f71124592
+```
+
+Its models live in their own writable volume, `ollama-data`. `llm-models` is mounted read-only, as everywhere else. The `--help` output for `ollama`, `serve`, `create`, `ps` and `show` is in `help/ollama-0.40.16/`.
+
 ## .NET SDK
 
 Builds and runs the code that models write, for the code tasks in `tasks/`. Nothing in it touches the GPU.
