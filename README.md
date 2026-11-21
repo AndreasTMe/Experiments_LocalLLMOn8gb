@@ -14,9 +14,9 @@ Each experiment has its own folder under `experiments/` and gets a git tag when 
 
 ## Experiments
 
-| #   | Question                    | Folder                          | Tag     |
-| --- | --------------------------- | ------------------------------- | ------- |
-| 01  | How much model fits in 8 GB | `experiments/01-how-much-fits/` | not yet |
+| #   | Question                    | Folder                          | Tag                |
+| --- | --------------------------- | ------------------------------- | ------------------ |
+| 01  | How much model fits in 8 GB | `experiments/01-how-much-fits/` | `01-how-much-fits` |
 
 ## Running it yourself
 
